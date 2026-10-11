@@ -173,7 +173,7 @@ canvas{width:100%;height:auto;display:block}
         <li><b>Tap anywhere</b> on the game (or press Space) to jump. You can jump twice in the air.</li>
         <li>Collect coins. Bump an orange <b>?</b> block from below. Most give a question. Some throw out coins or a booster. A few drop an angry mushroom.</li>
         <li><b>Jump over</b> roaming mushrooms and floor spikes, or land on a mushroom to squash it. Touching one costs you 3 coins.</li>
-        <li><b>Right answer:</b> coins, points and a streak bonus. Every 3 in a row gives a Shield or a Plane that keeps you safe.</li>
+        <li><b>Right answer:</b> coins, points and a streak bonus. Every 3 in a row gives a Shield, or a Plane that flies you over danger and hits blocks for you.</li>
         <li><b>Wrong answer:</b> you lose 3 coins and see the right answer. You never get knocked out.</li>
         <li>Missed questions come back later. Clear every question block, reach the flag and your bear earns another chevron.</li>
       </ul>
@@ -625,7 +625,7 @@ function spawnPatterns(){
 }
 
 function jump(){
-  if(!G||G.over||G.paused||G.modal)return;
+  if(!G||G.over||G.paused||G.modal||G.plane>0)return;
   if(G.onGround){G.vy=-640;G.onGround=false;G.jumps=1;SFX.jump()}
   else if(G.jumps<2){G.vy=-540;G.jumps=2;SFX.jump();burst(PX+PW/2,G.py+PH,"#fff",6)}
 }
@@ -671,9 +671,14 @@ function step(dt){
   if(G.limit&&G.elapsed>=G.limit){endGame();return}
   G.scrollX+=G.speed*dt;
   if(G.invuln>0)G.invuln=Math.max(0,G.invuln-dt);
-  if(G.plane>0){G.plane=Math.max(0,G.plane-dt);if(G.plane===0){showToast("Plane landed");updateHUD()}}
-  G.vy+=1750*dt;G.py+=G.vy*dt;
-  if(G.py>=GROUND-PH){G.py=GROUND-PH;G.vy=0;G.onGround=true;G.jumps=0}
+  if(G.plane>0){G.plane=Math.max(0,G.plane-dt);if(G.plane===0){G.jumps=1;G.vy=0;showToast("Plane landed");updateHUD()}}
+  if(G.plane>0){
+    // flying: glide up to block height so blocks are hit automatically, above all spikes and mushrooms
+    G.py+=((GROUND-182)-G.py)*Math.min(1,6*dt);G.vy=0;G.onGround=false;G.jumps=2;
+  }else{
+    G.vy+=1750*dt;G.py+=G.vy*dt;
+    if(G.py>=GROUND-PH){G.py=GROUND-PH;G.vy=0;G.onGround=true;G.jumps=0}
+  }
   spawnPatterns();
   var px0=PX+4,px1=PX+PW-4,py0=G.py+8,py1=G.py+PH;
   for(var i=0;i<G.entities.length;i++){
@@ -950,7 +955,7 @@ function answer(i){
 function awardBooster(){
   SFX.boost();
   if(Math.random()<.5&&!G.shield){G.shield=true;return "Streak reward: Shield! It blocks the next mushroom, spike or wrong answer."}
-  G.plane=12;return "Streak reward: Plane! Ride it for 12 seconds. Mushrooms and spikes cannot hurt you.";
+  G.plane=12;return "Streak reward: Plane! Fly at block height for 12 seconds. You skip every mushroom and spike and bump the ? blocks automatically.";
 }
 function closeQuestion(){
   clearTimeout(feedTimer);
