@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Hillgrover Science Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Press+Start+2P&display=swap">
+<style>
+:root{color-scheme:light}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: one centred game column. Menu and summary are panels over a sky backdrop; play is a wide canvas with a HUD strip above it; questions open in a full-screen modal. */
+:root{
+  --sky-top:#3aa8f0;
+  --sky-low:#c4ecff;
+  --ink:#14213d;
+  --paper:#fffdf5;
+  --coin:#ffc233;
+  --block:#e8772e;
+  --grass:#3fa34d;
+  --good:#2a9d4f;
+  --bad:#d6403f;
+  --muted:#4d5b78;
+  --line:#14213d;
+  --font-display:"Press Start 2P","Courier New",monospace;
+  --font-body:"Nunito","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:linear-gradient(var(--sky-top),var(--sky-low) 70%,#a5dd8f 70%,#a5dd8f);
+  background-attachment:fixed;
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-weight:600;
+  font-size:16px;
+  line-height:1.45;
+  padding-inline:16px;
+  padding-block:20px;
+  margin:0;
+}
+button{font-family:inherit;font-weight:800;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wrap{max-width:980px;margin-inline:auto}
+h1,h2,h3{font-family:var(--font-display);font-weight:400;line-height:1.35;margin:0;text-wrap:balance}
+.panel{background:var(--paper);border:4px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--line);padding:20px}
+.btn{
+  border:3px solid var(--line);background:var(--coin);border-radius:6px;padding:12px 18px;font-size:1rem;cursor:pointer;
+  box-shadow:0 4px 0 var(--line);min-height:44px;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.btn.alt{background:#fff}
+.btn.go{background:var(--good);color:#fff}
+.btn.small{padding:6px 12px;font-size:.85rem;min-height:36px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.grow{flex:1 1 0;min-width:0}
+.muted{color:var(--muted)}
+.tag{font-family:var(--font-display);font-size:.6rem;letter-spacing:.04em}
+
+/* menu */
+#menu{display:grid;gap:20px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
+@media(max-width:760px){#menu{grid-template-columns:minmax(0,1fr)}}
+.title{font-size:clamp(1.3rem,4.5vw,2.3rem);color:var(--paper);text-shadow:4px 4px 0 var(--ink);margin-bottom:6px}
+.title small{display:block;font-size:.45em;margin-top:10px;color:var(--ink);text-shadow:none;letter-spacing:.05em}
+.hero{grid-column:1/-1;padding-block:10px}
+.field{display:grid;gap:6px;margin-block:12px}
+.field label,.label{font-weight:800}
+input[type=text],textarea{
+  width:100%;border:3px solid var(--line);border-radius:6px;padding:10px 12px;font:inherit;font-weight:800;background:#fff;color:var(--ink);
+}
+textarea{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:3px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+.how{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.board{width:100%;border-collapse:collapse;font-size:.9rem}
+.board th,.board td{padding:6px 8px;text-align:left;border-bottom:2px solid #d9d4bd}
+.board th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.board td.num,.board th.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll-x{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:.8rem}
+.dot{display:inline-block;width:12px;height:12px;border-radius:3px;border:2px solid var(--line);margin-right:5px;vertical-align:-1px}
+
+/* game */
+#game{display:none}
+.hud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.stat{background:var(--paper);border:3px solid var(--line);border-radius:6px;padding:6px 10px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.stat .k{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.stat .v{font-family:var(--font-display);font-size:.85rem;font-variant-numeric:tabular-nums}
+.stat.wide{flex:1 1 180px}
+.bar{height:12px;border:2px solid var(--line);border-radius:6px;background:#fff;overflow:hidden;margin-top:4px}
+.bar>i{display:block;height:100%;width:0;background:var(--good);transition:width .25s}
+.chev{vertical-align:middle;margin-right:4px;flex:0 0 auto}
+#game{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.canvas-wrap{touch-action:none;border:4px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--line);overflow:hidden;background:#8dd5ff;line-height:0;touch-action:manipulation}
+canvas{width:100%;height:auto;display:block}
+.below{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.inv{display:flex;flex-wrap:wrap;gap:8px}
+.inv .item{border:3px solid var(--line);background:#fff;border-radius:6px;padding:4px 10px;font-size:.85rem;display:flex;gap:6px;align-items:center}
+.inv .item.on{background:var(--coin)}
+.hint{font-size:.9rem;margin-top:8px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(20,33,61,.72);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;z-index:20}
+.modal.open{display:flex}
+.card{background:var(--paper);border:4px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--line);padding:20px;width:100%;max-width:680px;margin-block:auto}
+.q-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.topic-pill{border:3px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.8rem;font-weight:800;color:#fff}
+.q-text{font-size:1.15rem;font-weight:800;margin:0 0 14px;white-space:pre-line}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;border:3px solid var(--line);background:#fff;border-radius:6px;padding:10px 12px;cursor:pointer;font-size:1rem;min-height:48px;width:100%}
+.opt b{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:.85rem}
+.opt:hover:not(:disabled){background:#fff2c6}
+.opt.right{background:#c9f0d4;border-color:var(--good)}
+.opt.wrong{background:#fbd0cf;border-color:var(--bad)}
+.opt.gone{opacity:.3;pointer-events:none}
+.opt:disabled{cursor:default}
+.feedback{margin-top:14px;border:3px solid var(--line);border-radius:6px;padding:12px;background:#fff}
+.feedback.good{border-color:var(--good)}
+.feedback.bad{border-color:var(--bad)}
+.feedback h3{font-size:.8rem;margin-bottom:6px}
+.boost-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+/* summary */
+.big{font-family:var(--font-display);font-size:clamp(1.4rem,5vw,2.2rem)}
+.grid4{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-block:14px}
+.grid4 .stat{align-items:flex-start}
+.topic-bars{display:grid;gap:8px;margin-block:10px}
+.tb{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:.9rem}
+.tb .bar{margin:0}
+.tb .pct{text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:520px){.tb{grid-template-columns:minmax(0,90px) minmax(0,1fr) 54px}}
+.missed{display:grid;gap:8px;margin:10px 0 0;padding:0;list-style:none}
+.missed li{border:3px solid var(--line);border-radius:6px;background:#fff;padding:10px}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;word-break:break-all;background:#fff;border:3px dashed var(--line);border-radius:6px;padding:10px;user-select:all}
+.sr{position:absolute;left:-9999px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;z-index:40;font-weight:800;max-width:90vw;text-align:center}
+@media(prefers-reduced-motion:reduce){.bar>i{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<!-- MENU -->
+<section id="menu" aria-label="Start menu">
+  <div class="hero">
+    <h1 class="title">HILLGROVER<br>SCIENCE RUN<small>Sec 3 Science revision &middot; United We Soar</small></h1>
+  </div>
+  <div class="panel">
+    <h2 style="font-size:.95rem;margin-bottom:6px">Ready for take-off?</h2>
+    <p class="muted" style="margin:0">Help your teddy bear pilot run, jump and hit the orange ? blocks. Each block asks a revision question from Energy, Electricity, Waves, Forces, Staying Healthy and Digestion.</p>
+    <div class="field">
+      <label for="nameIn">Pilot name</label>
+      <input id="nameIn" type="text" maxlength="14" placeholder="e.g. Aisha" autocomplete="off">
+    </div>
+    <div class="field">
+      <span class="label" id="lenLabel">How long do you want to fly?</span>
+      <div class="chips" role="group" aria-labelledby="lenLabel" id="lenChips">
+        <button class="chip" data-min="10" aria-pressed="false">10 min</button>
+        <button class="chip" data-min="20" aria-pressed="false">20 min</button>
+        <button class="chip" data-min="40" aria-pressed="false">40 min</button>
+        <button class="chip" data-min="60" aria-pressed="true">1 hour</button>
+        <button class="chip" data-min="120" aria-pressed="false">2 hours</button>
+        <button class="chip" data-min="0" aria-pressed="false">No limit</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label" id="topicLabel">Topics</span>
+      <div class="chips" role="group" aria-labelledby="topicLabel" id="topicChips"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn go" id="startBtn">Start flying</button>
+      <button class="btn alt" id="soundBtn" aria-pressed="true">Sound: on</button>
+    </div>
+  </div>
+
+  <div style="display:grid;gap:20px;min-width:0">
+    <div class="panel">
+      <h2 style="font-size:.8rem;margin-bottom:10px">How to play</h2>
+      <ul class="how">
+        <li><b>Tap anywhere</b> on the game (or press Space) to jump. You can jump twice in the air.</li>
+        <li>Collect coins. Bump an orange <b>?</b> block from below. Most give a question. Some throw out coins or a booster. A few drop an angry mushroom.</li>
+        <li><b>Jump over</b> roaming mushrooms and floor spikes, or land on a mushroom to squash it. Touching one costs you 3 coins.</li>
+        <li><b>Right answer:</b> coins, points and a streak bonus. Every 3 in a row gives a Shield or a Plane that keeps you safe.</li>
+        <li><b>Wrong answer:</b> you lose 3 coins and see the right answer. You never get knocked out.</li>
+        <li>Missed questions come back later. Clear every question block, reach the flag and your bear earns another chevron.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2 style="font-size:.8rem;margin-bottom:10px">Top scores on this device</h2>
+      <div class="scroll-x" id="localBoard"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="grid-column:1/-1">
+    <h2 style="font-size:.8rem;margin-bottom:6px">Class board</h2>
+    <p class="muted" style="margin:0 0 8px">Every finished flight gives a score code. Paste the codes your class shares (one per line) to rank everyone together.</p>
+    <label for="codesIn" class="sr">Score codes</label>
+    <textarea id="codesIn" placeholder="HSR-..."></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn small" id="rankBtn">Rank these codes</button><span class="muted" id="rankMsg"></span></div>
+    <div class="scroll-x" id="classBoard" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" aria-label="Game">
+  <div class="hud" id="hud">
+    <div class="stat"><span class="k">Coins</span><span class="v" id="hCoins">0</span></div>
+    <div class="stat"><span class="k">Score</span><span class="v" id="hScore">0</span></div>
+    <div class="stat"><span class="k">Streak</span><span class="v" id="hStreak">0</span></div>
+    <div class="stat"><span class="k">Time left</span><span class="v" id="hTime">--</span></div>
+    <div class="stat wide"><span class="k" id="hRank">Level 1</span><span class="v" style="font-size:.7rem" id="hLevel"></span><div class="bar"><i id="hBar"></i></div></div>
+  </div>
+  <div class="canvas-wrap"><canvas id="cv" width="960" height="420" aria-label="Side-scrolling game. Press space or tap to jump."></canvas></div>
+  <div class="below">
+    <div class="inv" id="inv" aria-label="Boosters"></div>
+    <span class="grow"></span>
+    <button class="btn alt small" id="pauseBtn">Pause</button>
+  </div>
+  <p class="hint muted">Tap the game or press Space to jump. Hit ? blocks from below. Jump over mushrooms and spikes.</p>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary" style="display:none" aria-label="Flight summary"></section>
+
+</div>
+
+<!-- QUESTION MODAL -->
+<div class="modal" id="qModal" role="dialog" aria-modal="true" aria-labelledby="qText">
+  <div class="card">
+    <div class="q-meta" id="qMeta"></div>
+    <p class="q-text" id="qText"></p>
+    <div class="opts" id="qOpts"></div>
+    <div class="boost-row" id="qBoost"></div>
+    <div id="qFeed"></div>
+  </div>
+</div>
+
+<!-- GENERIC MODAL (pause, level up) -->
+<div class="modal" id="gModal" role="dialog" aria-modal="true" aria-labelledby="gTitle">
+  <div class="card" id="gCard"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ------------------------------------------------------------------ */
+/* TOPICS                                                              */
+/* ------------------------------------------------------------------ */
+var TOPICS = {
+  EN:{name:"Energy",color:"#d9480f"},
+  EL:{name:"Electricity",color:"#a07800"},
+  WV:{name:"Waves",color:"#1b7f8c"},
+  FO:{name:"Effects of Force",color:"#5b3fb3"},
+  SH:{name:"Staying Healthy",color:"#2a8a4a"},
+  DG:{name:"Digestion",color:"#b0306a"}
+};
+var TKEYS = Object.keys(TOPICS);
+
+/* ------------------------------------------------------------------ */
+/* QUESTION BANK: [topic, difficulty 1-3, question, right, [3 wrong], why] */
+/* ------------------------------------------------------------------ */
+var BANK = [
+/* ---- ENERGY ---- */
+["EN",1,"Which energy is stored in food and fuels like petrol?","chemical potential energy",["kinetic energy","sound energy","thermal energy"],"Food and fuels store chemical potential energy until they are eaten or burnt."],
+["EN",1,"A cyclist is moving along a road. Which energy does the moving bicycle have?","kinetic energy",["chemical potential energy","elastic potential energy","gravitational potential energy"],"Anything that is moving has kinetic energy."],
+["EN",1,"A stretched rubber band is ready to be released. Which energy does it store?","elastic potential energy",["chemical potential energy","gravitational potential energy","kinetic energy"],"Stretched or squashed objects store elastic potential energy."],
+["EN",1,"A book on a high shelf has which type of stored energy?","gravitational potential energy",["elastic potential energy","kinetic energy","sound energy"],"Objects raised above the ground store gravitational potential energy."],
+["EN",1,"Thermal energy always flows from","a hot object to a cold object",["a cold object to a hot object","a heavy object to a light object","a large object to a small object"],"Heat moves from high temperature to low temperature."],
+["EN",1,"A hot drink is left on a table. What happens to its thermal energy?","It moves to the cooler surroundings.",["It is destroyed.","It moves to the cup, then back to the drink.","It turns into cold energy."],"Thermal energy flows from the hot drink to the cooler air and table."],
+["EN",1,"Which of these is a fossil fuel?","coal",["solar panel","water","wind"],"Coal, oil and natural gas are fossil fuels."],
+["EN",1,"What is the SI unit of power?","watt (W)",["joule (J)","newton (N)","volt (V)"],"Power is measured in watts. One watt is one joule per second."],
+["EN",1,"What does a generator in a power station produce?","electrical energy",["chemical energy","sound energy","thermal energy"],"A generator changes kinetic energy of the turning turbine into electrical energy."],
+["EN",1,"In a fossil fuel power station, which part comes straight after the boiler?","turbine",["furnace","generator","transformer"],"Order: furnace, boiler, turbine, generator."],
+["EN",2,"Energy cannot be created or destroyed. It can only change from one form to another. What is this called?","the conservation of energy",["the creation of energy","the loss of energy","the transfer of power"],"Total energy stays the same, even when its form changes."],
+["EN",2,"Rubbing your hands together makes them warm. Which energy change takes place?","kinetic energy to thermal energy",["chemical energy to kinetic energy","sound energy to thermal energy","thermal energy to kinetic energy"],"Movement (kinetic) is changed to heat (thermal) by friction."],
+["EN",2,"A toy car stops after rolling across the floor. A student says the energy is used up. What is the correct idea?","The energy changed into thermal and sound energy.",["The energy was destroyed.","The energy went back into the toy as chemical energy.","The energy was created again by the floor."],"Energy is never used up. It changes form and spreads to the surroundings."],
+["EN",2,"A filament light bulb is switched on. Most of the electrical energy becomes","thermal energy",["chemical energy","kinetic energy","sound energy"],"Filament bulbs waste most of their energy as heat."],
+["EN",2,"A phone speaker plays music. Which energy change is happening?","electrical energy to sound energy",["chemical energy to electrical energy","electrical energy to thermal energy","sound energy to electrical energy"],"The speaker changes electrical energy into sound."],
+["EN",2,"The steam in a power station turns a turbine. Which energy change takes place?","thermal energy to kinetic energy",["electrical energy to thermal energy","kinetic energy to chemical energy","thermal energy to sound energy"],"Hot steam pushes the turbine blades, so thermal becomes kinetic."],
+["EN",2,"Why is electricity sent along long power cables at a very high voltage?","It lowers the current, so less energy is lost as heat.",["It makes the cables thicker.","It makes the electricity travel faster.","It increases the current."],"High voltage means a smaller current for the same power, so the cables lose less heat."],
+["EN",2,"What does a step-up transformer do?","It increases the voltage.",["It decreases the voltage.","It decreases the power to zero.","It turns electricity into chemical energy."],"Step-up transformers raise voltage. They are used at power stations."],
+["EN",2,"Near a housing estate, a transformer changes 22 000 V to 230 V. What type is it?","step-down transformer",["generator","step-up transformer","turbine"],"The voltage is made smaller, so it is a step-down transformer."],
+["EN",3,"A smooth ramp has no friction. A trolley has 80 J of gravitational potential energy at the top. What is its kinetic energy just before the bottom?","80 J",["0 J","40 J","160 J"],"With no energy lost, all the gravitational potential energy becomes kinetic energy."],
+["EN",3,"Which action wastes the least electrical energy at home?","switching off lights in empty rooms",["leaving a fan on in an empty room","leaving the TV on standby all night","opening the fridge door for a long time"],"Not using energy at all is the best way to avoid waste."],
+/* ---- ELECTRICITY ---- */
+["EL",1,"Three bulbs are connected in series. Current through the first bulb is 0.4 A. What is the current through the last bulb?","0.4 A",["0.13 A","0.8 A","1.2 A"],"In a series circuit the current is the same everywhere."],
+["EL",1,"Which instrument is connected in parallel across a bulb to measure its voltage?","voltmeter",["ammeter","stopwatch","thermometer"],"A voltmeter is always connected across (in parallel with) the component."],
+["EL",1,"Two lamps are in parallel with a 6 V battery. What is the voltage across each lamp?","6 V",["2 V","3 V","12 V"],"In parallel, every branch gets the full battery voltage."],
+["EL",1,"One bulb in a string of old Christmas lights breaks and the whole string goes out. How are the bulbs connected?","in series",["in parallel","in a short circuit","in separate batteries"],"In series, there is only one path. A break stops the current everywhere."],
+["EL",1,"Why are household appliances connected in parallel?","Each appliance can work on its own.",["The current is the same in every appliance.","The resistance is the highest possible.","They need less wire."],"In parallel, switching one off does not affect the others."],
+["EL",1,"Which unit is used for electrical energy on a household electricity bill?","kilowatt-hour (kWh)",["kilogram (kg)","newton (N)","watt (W)"],"Bills use kilowatt-hours, which measure energy used over time."],
+["EL",2,"Adding more bulbs in series to a circuit makes the total resistance","bigger",["smaller","the same","zero"],"Each extra bulb in series adds resistance."],
+["EL",2,"Adding another branch in parallel makes the total resistance","smaller",["bigger","the same","infinite"],"More paths for the current means the total resistance goes down."],
+["EL",2,"A rice cooker label says 240 V and 800 W. What does 800 W tell us?","800 J of electrical energy is used every second.",["800 A of current flows.","The cooker needs 800 V.","The cooker holds 800 J of energy."],"Power in watts is energy used per second."],
+["EL",2,"A label says 240 V on a kettle. What does this mean?","The kettle works best with a 240 V supply.",["The kettle gives out 240 W of power.","The kettle carries 240 A of current.","The kettle stores 240 J."],"Voltage rating is the supply voltage the appliance is made to use."],
+["EL",2,"Which formula connects power, current and voltage?","P = I × V",["P = I ÷ V","P = V ÷ I","P = I + V"],"Power = current × voltage."],
+["EL",2,"Three 1.5 V cells in series are connected to a bulb. Which calculation gives the voltage across the bulb?","1.5 + 1.5 + 1.5",["1.5 × 1.5","1.5 ÷ 3","3 − 1.5"],"Voltages of cells in series add up: 1.5 + 1.5 + 1.5 = 4.5 V."],
+["EL",2,"In a parallel circuit, the current in the main wire is 0.9 A. One branch carries 0.4 A. Which calculation gives the current in the other branch?","0.9 − 0.4",["0.9 + 0.4","0.9 × 0.4","0.9 ÷ 0.4"],"Branch currents add up to the main current, so the other branch carries 0.9 − 0.4 = 0.5 A."],
+["EL",2,"Which habit helps to reduce electricity wastage?","unplugging chargers that are not being used",["leaving air-conditioners on all day","using bigger bulbs","opening windows while the fan is on"],"Chargers still use a little energy when plugged in."],
+["EL",2,"Two bulbs are in series with a 6 V battery. A voltmeter is across both bulbs. What does it read?","6 V",["0 V","3 V","12 V"],"The voltages across the bulbs in series add up to the battery voltage."],
+["EL",3,"A student draws a circuit with two lamps. When one lamp is removed, the other stays lit. What can you say about the lamps?","They are in parallel.",["They are in series.","They are in a short circuit.","They have no resistance."],"Only parallel branches keep working if another branch is broken."],
+["EL",3,"Why is it better to use energy-saving appliances?","They give the same service using less electrical energy.",["They use more electricity but last longer.","They do not need to be plugged in.","They make the voltage higher."],"Lower power rating for the same job saves energy and money."],
+["EL",3,"Two identical bulbs are in series with a battery. What happens to each bulb's brightness if a third identical bulb is added in series?","Each bulb becomes dimmer.",["Each bulb becomes brighter.","Brightness does not change.","Only the new bulb lights up."],"More resistance means less current, so every bulb is dimmer."],
+["EL",3,"What do you need to know to work out the cost of using an appliance?","its power, the time used and the price per kWh",["its colour and size","its voltage and its weight","only its voltage"],"Cost = power (kW) × time (h) × price per kWh."],
+/* ---- WAVES ---- */
+["WV",1,"Waves are produced by","vibrations",["batteries","friction only","gravity"],"A vibrating source starts a wave."],
+["WV",1,"A wave on a rope moves from your hand to the wall. What does the wave transfer?","energy",["the rope","matter","your hand"],"Waves transfer energy from place to place without moving the material along."],
+["WV",1,"A cork floats on water. A wave passes. What does the cork do?","bobs up and down in the same place",["moves along with the wave","sinks to the bottom","moves against the wave"],"The water, and the cork, only vibrate up and down. Matter is not carried along."],
+["WV",1,"Which waves are used to take pictures of broken bones?","X-rays",["microwaves","radio waves","infrared waves"],"X-rays pass through soft tissue but not bone."],
+["WV",1,"Which waves are used in a microwave oven to heat food?","microwaves",["gamma rays","radio waves","ultraviolet waves"],"Microwaves make water in food vibrate and heat up."],
+["WV",1,"A TV remote control sends signals using which waves?","infrared waves",["gamma rays","ultraviolet waves","X-rays"],"Most remote controls use infrared."],
+["WV",1,"Radio stations send programmes to your radio using","radio waves",["gamma rays","infrared waves","X-rays"],"Radio waves carry sound signals over long distances."],
+["WV",2,"The maximum distance a wave moves from its rest position is called its","amplitude",["frequency","speed","wavelength"],"Amplitude is the greatest displacement from the rest position."],
+["WV",2,"The distance between two neighbouring crests of a wave is its","wavelength",["amplitude","frequency","period"],"Wavelength is crest to crest (or trough to trough)."],
+["WV",2,"A wave has a frequency of 5 Hz. What does this mean?","5 complete waves pass a point every second.",["The wave is 5 metres long.","The wave travels 5 metres every second.","The wave lasts 5 seconds."],"Frequency is the number of waves each second."],
+["WV",2,"What is the unit of frequency?","hertz (Hz)",["metre (m)","newton (N)","watt (W)"],"Frequency is measured in hertz."],
+["WV",2,"Optical fibres send internet signals using which waves?","visible light",["gamma rays","microwaves","X-rays"],"Light signals bounce along the glass fibre."],
+["WV",2,"Which waves are used to sterilise medical equipment without chemicals?","ultraviolet waves",["infrared waves","microwaves","radio waves"],"Ultraviolet light kills germs on surfaces."],
+["WV",2,"Which waves are used to kill cancer cells in hospitals?","gamma rays",["infrared waves","radio waves","visible light"],"Gamma rays carry a lot of energy and can destroy cells."],
+["WV",2,"A student shakes a rope up and down. The wave travels along the rope. In which direction does a ribbon on the rope move?","up and down",["along the rope","diagonally","it does not move"],"The ribbon vibrates up and down as the wave passes."],
+["WV",2,"Which wave is used by satellites to send TV signals to Earth?","microwaves",["gamma rays","ultraviolet waves","X-rays"],"Microwaves are used for satellite communication."],
+["WV",2,"Thermal cameras show warm bodies using which waves?","infrared waves",["radio waves","ultraviolet waves","X-rays"],"Warm objects give out infrared waves."],
+["WV",3,"A student wants to measure the frequency of waves in a water tank. What should she count?","the number of waves passing a point in one second",["the height of the water","the total number of ripples in the tank","the length of the tank"],"Frequency is waves per second."],
+["WV",3,"Wave A has a bigger amplitude than wave B. What is true?","Wave A carries more energy.",["Wave A is slower.","Wave A has a shorter wavelength.","Wave A has a higher frequency."],"A larger amplitude means a larger transfer of energy."],
+["WV",3,"Which of these is NOT an electromagnetic wave?","a wave on a rope",["gamma rays","microwaves","visible light"],"A rope wave needs a rope. Electromagnetic waves are gamma, X-ray, UV, light, infrared, microwave and radio."],
+/* ---- EFFECTS OF FORCE ---- */
+["FO",1,"Which instrument is best for measuring the length of a pencil?","ruler",["balance","stopwatch","thermometer"],"A ruler measures length."],
+["FO",1,"Which instrument measures the time taken to run 100 m?","stopwatch",["measuring tape","ruler","thermometer"],"A stopwatch measures time."],
+["FO",1,"A goalkeeper catches a fast ball and stops it. Which effect of force is this?","change in the speed of an object",["change in the shape of an object","turning effect","no effect"],"The force made the ball slow down."],
+["FO",1,"You squeeze a sponge and it gets smaller. Which effect of force is this?","change in the shape of an object",["change in the direction of an object","change in the speed of an object","turning effect"],"A force can change the shape of an object."],
+["FO",1,"Which is the correct unit for speed?","m/s",["m/s²","N","kg"],"Speed is distance per time: metres per second."],
+["FO",1,"Which is the correct unit for acceleration?","m/s²",["m/s","m/s³","N/s"],"Acceleration is the change in speed each second: m/s²."],
+["FO",1,"A player kicks a rolling ball sideways. Which effect of force is shown?","change in the direction of motion",["change in shape only","turning effect","no change at all"],"The ball now moves in a new direction."],
+["FO",2,"On a distance-time graph, a horizontal line means the object is","not moving",["moving at constant speed","speeding up","slowing down"],"The distance does not change, so the object is stationary."],
+["FO",2,"On a distance-time graph, a straight sloping line means the object is","moving at constant speed",["not moving","speeding up","slowing down"],"A straight line means the same distance is covered every second."],
+["FO",2,"Two runners are plotted on one distance-time graph. Runner X has a steeper line than runner Y. Who is faster?","runner X",["runner Y","both are the same","not enough information"],"A steeper line covers more distance in the same time, so it shows a higher speed."],
+["FO",2,"A door handle is placed far from the hinge. Why?","A smaller force can open the door.",["The door becomes lighter.","The hinge stays cold.","The door opens by itself."],"A bigger distance from the pivot gives a bigger turning effect (moment) for the same force."],
+["FO",2,"Which spanner is easiest for loosening a tight nut?","the longest spanner",["the shortest spanner","the lightest spanner","the thinnest spanner"],"A longer spanner gives a larger distance from the pivot, so a bigger turning effect."],
+["FO",2,"You read a ruler from the side at an angle. What is the likely problem?","The reading may be wrong.",["The ruler will break.","The object gets longer.","The ruler turns into a tape."],"Your eye should be directly above the mark to read it correctly."],
+["FO",2,"A seesaw has a child on one side near the middle and a heavier child on the other side far from the middle. Which child has the larger turning effect?","the heavier child sitting far from the middle",["the lighter child near the middle","both the same","neither"],"Moment depends on both the force and the distance from the pivot."],
+["FO",2,"What is the formula for average speed?","total distance ÷ total time",["total distance × total time","total time ÷ total distance","speed ÷ time"],"Average speed = total distance divided by total time."],
+["FO",3,"A car moves at 10 m/s, then speeds up to 30 m/s in 5 seconds. Which description is correct?","It accelerates.",["It moves at constant speed.","It stops.","It slows down."],"Its speed is changing, so it is accelerating."],
+["FO",3,"A cyclist's distance-time graph is a straight line that goes up, then flat, then up again at the same steepness. What happened?","moved, stopped for a rest, then moved at the same speed",["sped up, then slowed down","moved backwards","moved at a changing speed throughout"],"Flat means stopped. Equal steepness means the same speed."],
+["FO",3,"You push a heavy box but it does not move. Which statement is correct?","The force did not change the speed of the box.",["No force was applied.","The box lost energy.","The box turned."],"A force may not always have a visible effect on motion."],
+["FO",3,"A student wants to find how long a hallway is. Which instrument and method is best?","measuring tape laid along the floor",["ruler used one time at an angle","stopwatch","thermometer"],"A measuring tape gives the length in one go."],
+/* ---- STAYING HEALTHY ---- */
+["SH",1,"Which nutrient gives us most of our energy?","carbohydrates",["minerals","vitamins","water"],"Rice, bread and noodles are rich in carbohydrates and give us energy."],
+["SH",1,"Which nutrient is needed for growth and repair of the body?","proteins",["carbohydrates","fibre","vitamins"],"Proteins build and repair muscles and skin."],
+["SH",1,"Which mineral helps to build strong bones and teeth?","calcium",["iron","sodium","sugar"],"Milk and tofu contain calcium."],
+["SH",1,"Which nutrient helps to prevent constipation?","fibre",["fats","protein","sugar"],"Fibre keeps food moving through the gut."],
+["SH",1,"A balanced diet means","eating the right amount of each nutrient",["eating only vegetables","eating as much as possible","skipping meals to stay slim"],"A balanced diet has carbohydrates, proteins, fats, vitamins, minerals, fibre and water in suitable amounts."],
+["SH",1,"Which is a healthy lifestyle habit?","sleeping 8 hours each night",["smoking","eating fast food every day","staying up all night"],"Enough sleep, exercise and good food keep us healthy."],
+["SH",1,"What is a fracture?","a broken bone",["a stretched ligament","a swollen muscle","a worn joint"],"A fracture is a crack or break in a bone."],
+["SH",2,"BMI is worked out using which formula?","mass (kg) ÷ height (m) ÷ height (m)",["mass (kg) × height (m)","height (m) ÷ mass (kg)","mass (kg) ÷ height (m)"],"BMI = mass ÷ (height × height)."],
+["SH",2,"A person has a BMI of 17. Which group does this belong to?","underweight",["healthy weight","overweight","obese"],"A BMI below 18.5 is underweight."],
+["SH",2,"What is the job of cartilage in a joint?","It cushions the bones and reduces friction.",["It joins bone to bone.","It joins muscle to bone.","It produces blood cells."],"Cartilage covers the ends of bones so they slide smoothly."],
+["SH",2,"Which part of a joint holds two bones together?","ligament",["cartilage","tendon","fat"],"Ligaments connect bone to bone."],
+["SH",2,"A girl lands badly after a jump. A ligament in her ankle is stretched and torn. What is this called?","sprain",["arthritis","dislocation","osteoporosis"],"A sprain is an injury to a ligament."],
+["SH",2,"A bone slips out of its normal place at a joint. What is this called?","dislocation",["fracture","sprain","arthritis"],"Dislocation means the bones at a joint are out of position."],
+["SH",2,"Painful, swollen joints that are stiff in an older person are most likely","arthritis",["dislocation","a sprain","a fracture"],"Arthritis is a joint problem caused by wear or swelling in the joints."],
+["SH",2,"Which condition makes bones weak and easy to break?","osteoporosis",["arthritis","sprain","dislocation"],"Osteoporosis makes bones thin and brittle. Eating enough calcium and exercising helps."],
+["SH",2,"Why should you finish a whole course of antibiotics?","to make sure all the bacteria are killed",["to make the medicine last longer","because antibiotics are sweet","to stop viruses from growing"],"Stopping early can let the surviving bacteria multiply again."],
+["SH",2,"Antibiotics are used to treat illnesses caused by","bacteria",["viruses","both viruses and bacteria","poor posture"],"Antibiotics work on bacteria but not on viruses."],
+["SH",2,"A vaccine helps the body by","preparing it to fight a germ quickly",["killing all the bacteria in the body","replacing blood","making the body hotter"],"A vaccine trains the body to recognise a germ before real infection."],
+["SH",2,"The flu is caused by a","virus",["bacterium","fossil","parasite worm"],"Flu is a virus. Antibiotics will not cure it."],
+["SH",3,"Which person has the highest risk of osteoporosis?","someone who eats little calcium and never exercises",["someone who drinks milk and walks daily","someone who eats a balanced diet and swims","someone who plays football and eats cheese"],"Low calcium and lack of weight-bearing activity weaken bones."],
+["SH",3,"Why is it risky for a teenager to eat very little while training hard every day?","The body may become weak and bones can become fragile.",["The body will become taller faster.","The bones will become thicker.","The immune system always improves."],"Undereating while over-exercising can damage health and bones."],
+["SH",3,"Colour blindness is passed from parents to children through genes. What type of condition is this?","hereditary",["infectious","caused by bacteria","caused by lack of exercise"],"Hereditary conditions are inherited from parents."],
+["SH",3,"A patient may need a kidney from a donor. Which is a limitation of organ transplants?","There are not enough donors.",["Organs never wear out.","Kidneys can be made at home.","The body never rejects new organs."],"Donor shortage and rejection are two limitations of organ technology."],
+/* ---- DIGESTION ---- */
+["DG",1,"Why must food be digested?","Large food molecules must be broken into small ones that can be absorbed.",["so food can be stored in the stomach","to make food hot","to make the food taste better"],"Only small, soluble molecules can pass into the blood."],
+["DG",1,"Where does chewing and mixing food with saliva happen?","mouth",["gullet","liver","stomach"],"Teeth chew food and saliva starts digesting starch."],
+["DG",1,"Which tube carries food from the mouth to the stomach?","gullet",["large intestine","small intestine","windpipe"],"The gullet (oesophagus) moves food down by squeezing muscles."],
+["DG",1,"Most digested food is absorbed into the blood in the","small intestine",["gullet","mouth","stomach"],"The small intestine is long and has a large surface for absorption."],
+["DG",1,"Which organ takes in water from undigested food?","large intestine",["liver","pancreas","stomach"],"The large intestine absorbs water and forms faeces."],
+["DG",1,"Which organ makes bile?","liver",["mouth","stomach","gullet"],"Bile is made in the liver and helps to digest fats."],
+["DG",2,"Put these in order: stomach, mouth, small intestine, gullet.","mouth, gullet, stomach, small intestine",["gullet, mouth, stomach, small intestine","mouth, stomach, gullet, small intestine","stomach, mouth, small intestine, gullet"],"Food goes mouth, gullet, stomach, small intestine, large intestine."],
+["DG",2,"What do enzymes do in digestion?","They speed up the breakdown of food.",["They store food.","They absorb water.","They make food hotter."],"Enzymes speed up digestion."],
+["DG",2,"An enzyme works best at 37 °C. What happens at 80 °C?","The enzyme stops working.",["It works twice as fast.","It works exactly the same.","It becomes bigger."],"Very high temperature damages (denatures) the enzyme."],
+["DG",2,"Stomach juices are acidic at about pH 2. What can you say about the enzyme in the stomach?","It works best in acidic conditions.",["It works best in alkaline conditions.","It works at any pH.","It works only in cold water."],"Each enzyme has an optimum pH. Stomach enzymes like acid."],
+["DG",2,"A graph shows an enzyme with its fastest digestion at pH 8. What does pH 8 tell us about where it works?","a place that is slightly alkaline, like the small intestine",["a very acidic place like the stomach","the mouth only","the gullet"],"The small intestine is slightly alkaline, so enzymes there work best at about pH 8."],
+["DG",2,"What is an optimum temperature for an enzyme?","the temperature where it works fastest",["the temperature where it stops working","the temperature of ice","the temperature of boiling water"],"Optimum means best."],
+["DG",2,"What can cause constipation?","not eating enough fibre or drinking too little water",["eating too much fruit","exercising","drinking enough water"],"Fibre and water keep faeces soft and easy to pass."],
+["DG",2,"Drinking too much alcohol over many years harms which organ most?","liver",["gullet","skin","teeth"],"The liver breaks down alcohol. Heavy drinking damages it."],
+["DG",2,"Which organ churns food and mixes it with acidic juices?","stomach",["gullet","large intestine","mouth"],"The stomach churns food and starts digesting proteins."],
+["DG",3,"Which lifestyle habit increases the risk of diabetes?","eating many sugary foods and not exercising",["eating plenty of vegetables","walking every day","sleeping well"],"Sugary diet plus inactivity raises the risk of diabetes."],
+["DG",3,"A graph shows undigested food falling from 100% to 0% in a part of the digestive system. What does this tell you?","Most of the food has been digested and absorbed by that part.",["The food has not been digested yet.","The food has been stored.","No enzymes are present."],"The dropping line shows food being digested and absorbed."],
+["DG",3,"Why is the small intestine long, narrow and folded?","to give a large surface for absorbing nutrients",["to store food for days","to make bile","to produce acid"],"A large surface area helps absorption."],
+["DG",3,"Why does a person who eats a fatty meal need bile?","Bile breaks fat into small droplets so it can be digested.",["Bile is acidic to kill germs.","Bile absorbs water.","Bile turns fat into protein."],"Bile makes fats easier to digest."],
+["DG",3,"A student mixes an enzyme with food in a test tube of boiling water. Why does digestion not happen?","The high temperature damages the enzyme.",["The water is too cold.","The enzyme is too heavy.","The test tube is too large."],"Boiling water destroys the enzyme's shape."]
+];
+
+/* ---- generated questions (new numbers every time; options are calculations, not answers) ---- */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function nf(x){return String(Math.round(x*100)/100)}
+function fopts(c,cands){var out=[],seen={};seen[c]=1;cands.forEach(function(s){if(!seen[s]){seen[s]=1;out.push(s)}});return out.slice(0,3)}
+var GENS = {
+  EN:[
+    function(){var t=pick([5,10,20,25]),p=pick([40,60,100,150]),e=p*t,c=e+" ÷ "+t;
+      return{t:"EN",d:2,q:"A heater uses "+e+" J of energy in "+t+" s. Which calculation gives its power in W?",c:c,w:fopts(c,[e+" × "+t,t+" ÷ "+e,e+" + "+t,e+" − "+t]),why:"Power = energy ÷ time = "+e+" ÷ "+t+" = "+p+" W."}},
+    function(){var p=pick([2,3,5]),t=pick([2,4,10]),c=p+" × 1000 × "+t;
+      return{t:"EN",d:3,q:"A "+p+" kW kettle runs for "+t+" s. Which calculation gives the energy used in J?",c:c,w:fopts(c,[p+" × "+t,p+" × 1000 ÷ "+t,p+" ÷ 1000 × "+t,p+" × 1000 + "+t]),why:"1 kW = 1000 W. Energy = power × time = "+p+" × 1000 × "+t+" = "+(p*1000*t)+" J."}}
+  ],
+  EL:[
+    function(){var a=ri(2,6)/10,b=ri(2,6)/10,hi=Math.max(a,b),lo=Math.min(a,b),c=nf(a)+" + "+nf(b);
+      return{t:"EL",d:2,q:"Two lamps are in parallel. One branch carries "+nf(a)+" A and the other carries "+nf(b)+" A. Which calculation gives the current in the main wire?",c:c,w:fopts(c,[nf(hi)+" − "+nf(lo),nf(a)+" × "+nf(b),nf(hi)+" ÷ "+nf(lo),nf(a)+" + "+nf(b)+" + "+nf(a)]),why:"In parallel, branch currents add: "+nf(a)+" + "+nf(b)+" = "+nf(a+b)+" A."}},
+    function(){var v=pick([1.5,2,3]),n=ri(2,4),c=n+" × "+v;
+      return{t:"EL",d:2,q:n+" identical cells of "+v+" V each are connected in series. Which calculation gives the total voltage?",c:c,w:fopts(c,[v+" ÷ "+n,n+" + "+v,n+" − "+v,v+" × "+v]),why:"Series voltages add: "+n+" × "+v+" = "+nf(v*n)+" V."}},
+    function(){var i=pick([2,3,5,10]),v=pick([12,24,230]),c=i+" × "+v;
+      return{t:"EL",d:2,q:"A lamp has a current of "+i+" A and a voltage of "+v+" V. Which calculation gives its power in W?",c:c,w:fopts(c,[v+" ÷ "+i,i+" ÷ "+v,i+" + "+v,v+" − "+i]),why:"P = I × V = "+i+" × "+v+" = "+(i*v)+" W."}},
+    function(){var kw=pick([1,2,3]),h=pick([2,4,5,6]),c=kw+" × "+h+" × 0.30";
+      return{t:"EL",d:3,q:"A "+kw+" kW heater is used for "+h+" hours. Electricity costs $0.30 per kWh. Which calculation gives the cost in dollars?",c:c,w:fopts(c,[kw+" × 0.30",h+" × 0.30",kw+" × "+h,kw+" × "+h+" ÷ 0.30"]),why:"Energy = "+kw+" × "+h+" = "+(kw*h)+" kWh. Cost = "+(kw*h)+" × 0.30 = $"+nf(kw*h*0.3)+"."}},
+    function(){var p=pick([600,1200,2400]),v=pick([120,240]),c=p+" ÷ "+v;
+      return{t:"EL",d:3,q:"A toaster is rated "+p+" W, "+v+" V. Which calculation gives the current through it in A?",c:c,w:fopts(c,[v+" ÷ "+p,p+" × "+v,p+" − "+v,p+" + "+v]),why:"I = P ÷ V = "+p+" ÷ "+v+" = "+nf(p/v)+" A."}},
+    function(){var n=pick([2,3,4,5]),v=pick([6,9,12,15]),vv=v*1,c=vv+" ÷ "+n;
+      return{t:"EL",d:3,q:n+" identical bulbs are connected in series to a "+vv+" V battery. Which calculation gives the voltage across one bulb?",c:c,w:fopts(c,[vv+" × "+n,vv+" − "+n,n+" ÷ "+vv,vv+" + "+n]),why:"Series voltages share the battery voltage equally: "+vv+" ÷ "+n+" = "+nf(vv/n)+" V."}}
+  ],
+  FO:[
+    function(){var t=pick([4,5,8,10]),s=pick([2,3,5,6]),d=s*t,n=pick(["Maya","Farid","Wei Ling","Daniel"]),c=d+" ÷ "+t;
+      return{t:"FO",d:1,q:n+" walks "+d+" m in "+t+" s. Which calculation gives the average speed in m/s?",c:c,w:fopts(c,[d+" × "+t,t+" ÷ "+d,d+" + "+t,d+" − "+t]),why:"Speed = distance ÷ time = "+d+" ÷ "+t+" = "+s+" m/s."}},
+    function(){var t=pick([2,4,5,10]),a=pick([2,3,4]),v=a*t,c=v+" ÷ "+t;
+      return{t:"FO",d:2,q:"A bus starts from rest and reaches "+v+" m/s after "+t+" s. Which calculation gives its acceleration in m/s²?",c:c,w:fopts(c,[v+" × "+t,t+" ÷ "+v,v+" + "+t,v+" − "+t]),why:"Acceleration = change in speed ÷ time = "+v+" ÷ "+t+" = "+a+" m/s²."}},
+    function(){var d1=pick([100,200,300]),t1=pick([20,30,50]),rest=pick([10,20]),d2=pick([100,200]),t2=pick([20,30]),
+      c="("+d1+" + "+d2+") ÷ ("+t1+" + "+rest+" + "+t2+")";
+      return{t:"FO",d:3,q:"A student cycles "+d1+" m in "+t1+" s, rests for "+rest+" s, then cycles "+d2+" m in "+t2+" s. Which calculation gives the average speed for the whole journey (including the rest)?",
+      c:c,w:fopts(c,["("+d1+" + "+d2+") ÷ ("+t1+" + "+t2+")","("+d1+" ÷ "+t1+" + "+d2+" ÷ "+t2+") ÷ 2","("+d1+" + "+d2+") ÷ "+rest,"("+d1+" + "+d2+") × ("+t1+" + "+rest+" + "+t2+")"]),
+      why:"Total distance = "+(d1+d2)+" m. Total time includes the rest: "+t1+" + "+rest+" + "+t2+" = "+(t1+rest+t2)+" s. Speed = "+(d1+d2)+" ÷ "+(t1+rest+t2)+" = "+nf((d1+d2)/(t1+rest+t2))+" m/s."}},
+    function(){var f=pick([10,20,30,40]),d=pick([0.2,0.5,0.8,1.5]),c=f+" × "+d;
+      return{t:"FO",d:3,q:"A force of "+f+" N is applied "+d+" m from a pivot, at right angles. Which calculation gives the moment of the force in N m?",c:c,w:fopts(c,[f+" ÷ "+d,f+" + "+d,d+" ÷ "+f,f+" − "+d]),why:"Moment = force × distance from pivot = "+f+" × "+d+" = "+nf(f*d)+" N m."}},
+    function(){var s=pick([2,5,8,10]),t=pick([3,5,6,10]),d=s*t,c=d+" ÷ "+s;
+      return{t:"FO",d:2,q:"A cyclist travels "+d+" m at a steady "+s+" m/s. Which calculation gives the time taken in s?",c:c,w:fopts(c,[d+" × "+s,s+" ÷ "+d,d+" − "+s,d+" + "+s]),why:"Time = distance ÷ speed = "+d+" ÷ "+s+" = "+t+" s."}}
+  ],
+  SH:[
+    function(){var h=pick([1.5,1.6,1.7,1.8]),m=pick([45,50,55,60,70,80]),c=m+" ÷ ("+h+" × "+h+")";
+      return{t:"SH",d:3,q:"A student has a mass of "+m+" kg and a height of "+h+" m. Which calculation gives the BMI?",c:c,w:fopts(c,[m+" ÷ "+h,m+" × "+h,m+" × "+h+" × "+h,"("+m+" ÷ "+h+") × "+h]),why:"BMI = mass ÷ (height × height) = "+m+" ÷ ("+h+" × "+h+") = "+(m/(h*h)).toFixed(1)+"."}}
+  ]
+};
+
+/* ------------------------------------------------------------------ */
+/* STATE + UTIL                                                         */
+/* ------------------------------------------------------------------ */
+var $=function(id){return document.getElementById(id)};
+var store={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+           set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function fmtTime(s){s=Math.max(0,Math.ceil(s));var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x}
+
+var RANKS=["Cadet","Airman","Flight Sergeant","Pilot Officer","Flying Officer","Flight Lieutenant","Squadron Leader","Wing Commander","Group Captain","Air Commodore","Air Vice-Marshal","Air Marshal"];
+function rankName(l){return l<=RANKS.length?RANKS[l-1]:"Ace Pilot "+(l-RANKS.length)}
+
+var cfg={minutes:60,topics:TKEYS.slice(),sound:true};
+var G=null;   // game state
+
+/* ---- audio ---- */
+var AC=null;
+function beep(freq,dur,type,vol,delay){
+  if(!cfg.sound)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
+    var t0=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"square";o.frequency.setValueAtTime(freq,t0);
+    g.gain.setValueAtTime(vol||.05,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+dur+.02);
+  }catch(e){}
+}
+var SFX={
+  coin:function(){beep(988,.08);beep(1319,.14,"square",.05,.07)},
+  jump:function(){beep(300,.12,"triangle",.06)},
+  block:function(){beep(180,.1,"square",.07)},
+  right:function(){beep(523,.1);beep(659,.1,"square",.05,.1);beep(784,.2,"square",.05,.2)},
+  wrong:function(){beep(220,.15,"sawtooth",.05);beep(160,.25,"sawtooth",.05,.14)},
+  boost:function(){beep(660,.08);beep(880,.08,"square",.05,.08);beep(1175,.08,"square",.05,.16);beep(1568,.2,"square",.05,.24)},
+  level:function(){[523,659,784,1047,784,1047].forEach(function(f,i){beep(f,.14,"square",.05,i*.12)})}
+};
+
+/* ------------------------------------------------------------------ */
+/* MENU                                                                 */
+/* ------------------------------------------------------------------ */
+function buildMenu(){
+  var saved=store.get("hgrsciencerun.cfg",null);
+  if(saved){cfg.minutes=saved.minutes;cfg.sound=saved.sound!==false;if(saved.topics&&saved.topics.length)cfg.topics=saved.topics}
+  $("nameIn").value=store.get("hgrsciencerun.name","");
+  var chips=$("lenChips").querySelectorAll(".chip");
+  chips.forEach(function(c){
+    c.setAttribute("aria-pressed",String(+c.dataset.min===cfg.minutes));
+    c.addEventListener("click",function(){cfg.minutes=+c.dataset.min;chips.forEach(function(x){x.setAttribute("aria-pressed",String(x===c))})});
+  });
+  var tc=$("topicChips");
+  TKEYS.forEach(function(k){
+    var b=document.createElement("button");b.className="chip";b.textContent=TOPICS[k].name;
+    b.setAttribute("aria-pressed",String(cfg.topics.indexOf(k)>-1));
+    b.addEventListener("click",function(){
+      var i=cfg.topics.indexOf(k);
+      if(i>-1){if(cfg.topics.length>1)cfg.topics.splice(i,1)}else cfg.topics.push(k);
+      b.setAttribute("aria-pressed",String(cfg.topics.indexOf(k)>-1));
+    });
+    tc.appendChild(b);
+  });
+  $("soundBtn").setAttribute("aria-pressed",String(cfg.sound));
+  $("soundBtn").textContent="Sound: "+(cfg.sound?"on":"off");
+  $("soundBtn").addEventListener("click",function(){cfg.sound=!cfg.sound;this.setAttribute("aria-pressed",String(cfg.sound));this.textContent="Sound: "+(cfg.sound?"on":"off")});
+  $("startBtn").addEventListener("click",startGame);
+  $("rankBtn").addEventListener("click",rankCodes);
+  renderLocalBoard();
+}
+function renderLocalBoard(){
+  var b=store.get("hgrsciencerun.board",[]);
+  if(!b.length){$("localBoard").innerHTML='<p class="muted" style="margin:0">No flights yet. Be the first on the board.</p>';return}
+  var h='<table class="board"><thead><tr><th>#</th><th>Pilot</th><th class="num">Score</th><th class="num">Level</th></tr></thead><tbody>';
+  b.slice(0,8).forEach(function(r,i){h+='<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td class="num">'+r.score+'</td><td class="num">'+r.level+'</td></tr>'});
+  $("localBoard").innerHTML=h+'</tbody></table>';
+}
+
+/* ---- score codes ---- */
+function hash(s){var h=7;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%46656}return h.toString(36).toUpperCase().padStart(3,"0")}
+function makeCode(r){
+  var body=[r.name.replace(/[|]/g,""),r.score,r.coins,r.acc,r.level,r.correct].join("|");
+  var b64=btoa(unescape(encodeURIComponent(body))).replace(/=+$/,"").replace(/\+/g,"-").replace(/\//g,"_");
+  return "HSR-"+b64+"-"+hash(body);
+}
+function readCode(c){
+  try{
+    c=c.trim();var m=c.match(/^HSR-([A-Za-z0-9_-]+)-([0-9A-Z]{3})$/);if(!m)return null;
+    var s=m[1].replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";
+    var body=decodeURIComponent(escape(atob(s)));if(hash(body)!==m[2])return null;
+    var p=body.split("|");
+    return{name:p[0],score:+p[1],coins:+p[2],acc:+p[3],level:+p[4],correct:+p[5]};
+  }catch(e){return null}
+}
+function rankCodes(){
+  var lines=$("codesIn").value.split(/\s+/).filter(Boolean),rows=[],bad=0;
+  lines.forEach(function(l){var r=readCode(l);if(r)rows.push(r);else bad++});
+  rows.sort(function(a,b){return b.score-a.score});
+  var h="";
+  if(rows.length){
+    h='<table class="board"><thead><tr><th>#</th><th>Pilot</th><th class="num">Score</th><th class="num">Coins</th><th class="num">Accuracy</th><th class="num">Level</th></tr></thead><tbody>';
+    rows.forEach(function(r,i){h+='<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td class="num">'+r.score+'</td><td class="num">'+r.coins+'</td><td class="num">'+r.acc+'%</td><td class="num">'+r.level+'</td></tr>'});
+    h+='</tbody></table>';
+  }
+  $("classBoard").innerHTML=h;
+  $("rankMsg").textContent=rows.length?(rows.length+" pilot"+(rows.length>1?"s":"")+" ranked"+(bad?", "+bad+" code"+(bad>1?"s":"")+" not readable":"")):(bad?"No readable codes. Check they were copied in full.":"Paste at least one code.");
+}
+
+/* ------------------------------------------------------------------ */
+/* GAME CORE                                                            */
+/* ------------------------------------------------------------------ */
+var cv=$("cv"),cx=cv.getContext("2d");
+var W=960,H=420,GROUND=350,PX=170,PW=34,PH=54;
+
+function newGame(){
+  store.set("hgrsciencerun.cfg",cfg);
+  var nm=($("nameIn").value||"").trim()||"Pilot";
+  store.set("hgrsciencerun.name",nm);
+  return{
+    name:nm,limit:cfg.minutes*60,elapsed:0,over:false,
+    coins:0,score:0,streak:0,bestStreak:0,answered:0,correct:0,level:1,
+    perTopic:{},asked:{},seenIds:{},review:[],missed:[],missedKeys:{},
+    inv:{half:0,skip:0},shield:false,double:0,
+    topics:cfg.topics.slice(),
+    paused:false,modal:false,
+    scrollX:0,speed:240,
+    py:GROUND-PH,vy:0,onGround:true,jumps:0,
+    entities:[],particles:[],nextX:700,patternN:0,
+    levelBlocks:0,levelDone:0,flagSpawned:false,
+    lastT:0,anim:0,shake:0,
+    qSinceStart:0,flash:0,invuln:0,plane:0
+  };
+}
+function startGame(){
+  G=newGame();startLevel(1);
+  $("menu").style.display="none";$("summary").style.display="none";$("game").style.display="block";
+  window.scrollTo(0,0);
+  G.lastT=performance.now();
+  requestAnimationFrame(loop);
+  updateHUD();
+}
+function startLevel(l){
+  G.level=l;G.levelBlocks=Math.min(5+l,11);G.levelDone=0;G.flagSpawned=false;
+  G.entities=G.entities.filter(function(e){return e.type==="coin"||e.type==="pick"});
+  G.speed=Math.min(240+(l-1)*10,340);
+  G.nextX=G.scrollX+W+200;
+  G.patternN=0;
+}
+function outstandingBlocks(){return G.entities.filter(function(e){return e.type==="block"&&e.kind==="q"&&!e.hit&&!e.missed}).length}
+
+function addCoinRow(x,n,y){for(var i=0;i<n;i++)G.entities.push({type:"coin",x:x+i*44,y:y,got:false})}
+function addArc(x,n,h,stepX,base){base=base||GROUND-30;for(var i=0;i<n;i++){var a=n>1?i/(n-1):0;G.entities.push({type:"coin",x:x+i*stepX,y:base-Math.sin(a*Math.PI)*h,got:false})}}
+function addBlock(x,kind,bricks){
+  G.entities.push({type:"block",kind:kind,x:x,y:GROUND-160,w:44,h:44,hit:false,missed:false,bump:0});
+  if(bricks){G.entities.push({type:"brick",x:x-44,y:GROUND-160,w:44,h:44});G.entities.push({type:"brick",x:x+44,y:GROUND-160,w:44,h:44})}
+}
+function addMushroom(x,y,vy){G.entities.push({type:"mush",x:x,hx:x,y:y,w:34,h:30,vy:vy||0,dir:Math.random()<.5?-1:1,dead:false})}
+function addEnemy(x){
+  if(Math.random()<.5){
+    G.entities.push({type:"spike",x:x,y:GROUND-26,w:40,h:26});
+    G.entities.push({type:"coin",x:x-20,y:GROUND-75,got:false});G.entities.push({type:"coin",x:x+20,y:GROUND-100,got:false});G.entities.push({type:"coin",x:x+60,y:GROUND-75,got:false});
+  }else addMushroom(x,GROUND-30,0);
+}
+function surpriseKind(){var r=Math.random();return r<.52?"coin":r<.92?"boost":"mush"}
+
+function spawnPatterns(){
+  while(G.nextX<G.scrollX+W+240){
+    var x=G.nextX,out=outstandingBlocks(),need=G.levelBlocks-G.levelDone-out;
+    var enemyP=Math.min(.35+G.level*.05,.75),n=G.patternN;
+    if(need<=0&&!G.flagSpawned&&out===0){
+      G.entities.push({type:"flag",x:x+250,y:GROUND-170,w:14,h:170});G.flagSpawned=true;G.nextX=x+900;
+      addCoinRow(x,8,GROUND-30);continue;
+    }
+    if(need>0&&n%2===1){
+      addArc(x,5,105,46);
+      addBlock(x+260,"q",true);
+      G.nextX=x+620+ri(0,80);
+      if(Math.random()<enemyP)addEnemy(x+500);
+    }else if(n%4===2){
+      addArc(x,4,100,40);
+      addBlock(x+170,surpriseKind(),true);
+      G.nextX=x+540;
+      if(Math.random()<enemyP)addEnemy(x+400);
+    }else if(n%3===0){
+      var k=ri(5,8);addCoinRow(x,k,GROUND-30);
+      G.nextX=x+k*44+260;
+      if(Math.random()<enemyP)addEnemy(x+k*44+110);
+    }else{
+      var k2=ri(6,9);addArc(x,k2,100,44,GROUND-40);
+      G.nextX=x+k2*44+240;
+      if(Math.random()<enemyP)addEnemy(x+k2*44+100);
+    }
+    G.patternN++;
+  }
+}
+
+function jump(){
+  if(!G||G.over||G.paused||G.modal)return;
+  if(G.onGround){G.vy=-640;G.onGround=false;G.jumps=1;SFX.jump()}
+  else if(G.jumps<2){G.vy=-540;G.jumps=2;SFX.jump();burst(PX+PW/2,G.py+PH,"#fff",6)}
+}
+
+function loop(now){
+  if(!G||G.over)return;
+  var dt=Math.min(.05,(now-G.lastT)/1000);G.lastT=now;
+  if(!G.paused&&!G.modal)step(dt);
+  if(!G.paused)G.anim+=dt;
+  if(!G.over){draw();requestAnimationFrame(loop)}
+}
+
+function hurt(){
+  if(G.invuln>0||G.plane>0)return;
+  G.invuln=1.4;G.vy=-420;G.onGround=false;G.jumps=1;G.shake=1;
+  if(G.shield){G.shield=false;floatText("Shield!",PX+10,G.py-10,"#9be7ff");SFX.block();updateHUD();return}
+  var lose=Math.min(3,G.coins);G.coins-=lose;SFX.wrong();
+  floatText(lose?"-"+lose:"Ouch!",PX+10,G.py-10,"#ff9a9a");updateHUD();
+}
+var PICKS={shield:{l:"SH",c:"#5fd0ff",n:"Shield"},double:{l:"x2",c:"#ff9f43",n:"Double"},half:{l:"50",c:"#b78cf5",n:"50/50"},skip:{l:"SK",c:"#7ae582",n:"Skip"}};
+function givePick(k){
+  if(k==="shield")G.shield=true;
+  else if(k==="double")G.double=3;
+  else if(k==="half")G.inv.half=Math.min(5,G.inv.half+1);
+  else G.inv.skip=Math.min(5,G.inv.skip+1);
+  SFX.boost();showToast("Got a booster: "+PICKS[k].n);updateHUD();
+}
+function surprise(e,sx){
+  if(e.kind==="coin"){
+    for(var i=0;i<5;i++){var a=i/4;G.entities.push({type:"coin",x:e.x+54+i*40,y:GROUND-95-Math.sin(a*Math.PI)*45,got:false})}
+    floatText("Coins!",sx+22,e.y-10,"#ffc233");SFX.coin();
+  }else if(e.kind==="boost"){
+    G.entities.push({type:"pick",kind:pick(["shield","double","half","skip"]),x:e.x+70,y:GROUND-90,got:false});
+    floatText("Booster!",sx+22,e.y-10,"#9be7ff");SFX.boost();
+  }else{
+    addMushroom(e.x+60,e.y,-260);
+    floatText("Uh oh!",sx+22,e.y-10,"#ff9a9a");SFX.wrong();
+  }
+}
+
+function step(dt){
+  G.elapsed+=dt;
+  if(G.limit&&G.elapsed>=G.limit){endGame();return}
+  G.scrollX+=G.speed*dt;
+  if(G.invuln>0)G.invuln=Math.max(0,G.invuln-dt);
+  if(G.plane>0){G.plane=Math.max(0,G.plane-dt);if(G.plane===0){showToast("Plane landed");updateHUD()}}
+  G.vy+=1750*dt;G.py+=G.vy*dt;
+  if(G.py>=GROUND-PH){G.py=GROUND-PH;G.vy=0;G.onGround=true;G.jumps=0}
+  spawnPatterns();
+  var px0=PX+4,px1=PX+PW-4,py0=G.py+8,py1=G.py+PH;
+  for(var i=0;i<G.entities.length;i++){
+    var e=G.entities[i],sx=e.x-G.scrollX;
+    if(e.type==="coin"&&!e.got){
+      if(sx+8>px0-6&&sx-8<px1+6&&e.y+8>py0&&e.y-8<py1){e.got=true;G.coins++;G.score+=10;sparkle(sx,e.y);SFX.coin();updateHUD()}
+    }else if(e.type==="pick"&&!e.got){
+      if(sx+16>px0&&sx-16<px1&&e.y+16>py0&&e.y-16<py1){e.got=true;givePick(e.kind)}
+    }else if(e.type==="spike"){
+      if(sx+e.w-8>px0&&sx+8<px1&&py1>e.y+6)hurt();
+    }else if(e.type==="mush"&&!e.dead){
+      if(e.vy!==0||e.y<GROUND-e.h){e.vy+=1200*dt;e.y+=e.vy*dt;if(e.y>=GROUND-e.h){e.y=GROUND-e.h;e.vy=0;e.hx=e.x}}
+      else{e.x+=e.dir*70*dt;if(Math.abs(e.x-e.hx)>90)e.dir*=-1}
+      sx=e.x-G.scrollX;
+      if(sx+e.w>px0&&sx<px1&&e.y+e.h>py0&&e.y<py1){
+        if(G.vy>0&&py1<e.y+e.h*.65){e.dead=true;G.vy=-430;G.jumps=1;G.coins++;G.score+=25;burst(sx+17,e.y+15,"#e63946",10);floatText("+1",sx+17,e.y-6,"#ffc233");SFX.coin();updateHUD()}
+        else hurt();
+      }
+    }else if(e.type==="block"&&!e.hit&&!e.missed){
+      if(sx+e.w>px0&&sx<px1&&e.y+e.h>py0&&e.y<py1){
+        e.hit=true;e.bump=1;G.vy=Math.max(G.vy,120);SFX.block();burst(sx+e.w/2,e.y,"#ffc233",10);
+        if(e.kind==="q"){openQuestion();return}
+        surprise(e,sx);
+      }else if(sx+e.w<px0-60){e.missed=true;if(e.kind==="q")showToast("Missed a block. Another one is coming.")}
+    }else if(e.type==="flag"&&!e.done){
+      if(sx<px1&&sx+e.w>px0){e.done=true;levelClear();return}
+    }
+    if(e.bump>0)e.bump=Math.max(0,e.bump-dt*4);
+  }
+  G.entities=G.entities.filter(function(e){return e.x-G.scrollX>-260&&!e.dead&&!(e.type==="block"&&(e.hit||e.missed)&&e.x-G.scrollX<-60)});
+  G.particles.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g||600)*dt;p.life-=dt});
+  G.particles=G.particles.filter(function(p){return p.life>0});
+  if(G.shake>0)G.shake=Math.max(0,G.shake-dt*4);
+  if(G.limit)$("hTime").textContent=fmtTime(G.limit-G.elapsed);
+  if(G.plane>0&&Math.floor(G.plane*4)!==G._pl){G._pl=Math.floor(G.plane*4);updateHUD()}
+}
+
+function sparkle(x,y){for(var i=0;i<5;i++)G.particles.push({x:x,y:y,vx:(Math.random()-.5)*160,vy:-Math.random()*160,life:.4,col:"#ffc233",s:3,g:500})}
+function burst(x,y,col,n){for(var i=0;i<n;i++)G.particles.push({x:x,y:y,vx:(Math.random()-.5)*260,vy:-Math.random()*220,life:.6,col:col,s:4,g:700})}
+function floatText(txt,x,y,col){G.particles.push({text:txt,x:x,y:y,vx:0,vy:-60,life:1.1,col:col||"#fff",g:0})}
+
+/* ------------------------------------------------------------------ */
+/* DRAWING                                                              */
+/* ------------------------------------------------------------------ */
+var TIERS=["#ffd24a","#e8edf5","#ff9f43","#7fe0ff"];
+function chevCount(level){return ((level-1)%6)+1}
+function chevSVG(level,size){
+  size=size||22;var n=chevCount(level),col=TIERS[Math.min(Math.floor((level-1)/6),3)],sp=n<=4?4.4:3.2,s='';
+  for(var i=0;i<n;i++){var y=3+i*sp;s+='<polyline points="4,'+(y+4)+' 11,'+y+' 18,'+(y+4)+'" fill="none" stroke="'+col+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>'}
+  return '<svg class="chev" width="'+size+'" height="'+size+'" viewBox="0 0 22 22" role="img" aria-label="Rank: '+n+' chevron'+(n>1?'s':'')+'"><rect width="22" height="22" rx="4" fill="#3f7d3a"/>'+s+'</svg>';
+}
+function drawCadet(c,x,feetY,level,t,air,plane){
+  var n=chevCount(level),tc=TIERS[Math.min(Math.floor((level-1)/6),3)];
+  var leg=air?0:Math.sin(t*14)*6;
+  c.save();c.translate(x,feetY);c.lineWidth=2;c.strokeStyle="#14213d";c.lineJoin="round";
+  if(plane){
+    c.fillStyle="#f1f1f1";c.beginPath();c.moveTo(-14,-14);c.lineTo(-4,-8);c.lineTo(-4,-2);c.lineTo(-16,2);c.closePath();c.fill();c.stroke();
+    c.fillStyle="#e63946";c.beginPath();c.ellipse(18,-2,32,11,0,0,7);c.fill();c.stroke();
+    c.fillStyle="#9be7ff";c.beginPath();c.ellipse(34,-6,6,4,0,0,7);c.fill();c.stroke();
+    c.fillStyle="#c1121f";c.fillRect(6,-2,28,6);c.strokeRect(6,-2,28,6);
+    c.fillStyle="#14213d";c.fillRect(49,-12+Math.sin(t*50)*2,4,22-Math.sin(t*50)*4);
+    c.translate(0,-8);
+  }
+  var G1="#3f7d3a",BR="#a8703a",TN="#e0b98a",PW2="#7a4a21";
+  // legs
+  c.fillStyle=G1;c.fillRect(8+leg*.4,-14,9,14);c.strokeRect(8+leg*.4,-14,9,14);c.fillRect(19-leg*.4,-14,9,14);c.strokeRect(19-leg*.4,-14,9,14);
+  c.fillStyle=PW2;c.fillRect(7+leg*.4,-4,11,5);c.fillRect(18-leg*.4,-4,11,5);
+  // body + arms
+  c.fillStyle=G1;c.fillRect(7,-37,22,25);c.strokeRect(7,-37,22,25);
+  c.fillRect(1,-35,7,13);c.strokeRect(1,-35,7,13);c.fillRect(28,-35,7,13);c.strokeRect(28,-35,7,13);
+  c.fillStyle=BR;c.beginPath();c.arc(4.5,-21,4,0,7);c.fill();c.stroke();c.beginPath();c.arc(31.5,-21,4,0,7);c.fill();c.stroke();
+  // chevrons
+  c.strokeStyle=tc;c.lineWidth=2.4;c.lineCap="round";var sp=n<=4?5:3.7;
+  for(var i=0;i<n;i++){var y=-34+i*sp;c.beginPath();c.moveTo(11,y+4);c.lineTo(18,y);c.lineTo(25,y+4);c.stroke()}
+  c.lineCap="butt";c.strokeStyle="#14213d";c.lineWidth=2;
+  // ears
+  c.fillStyle=BR;c.beginPath();c.arc(8,-55,6,0,7);c.fill();c.stroke();c.beginPath();c.arc(28,-55,6,0,7);c.fill();c.stroke();
+  c.fillStyle=TN;c.beginPath();c.arc(8,-55,2.8,0,7);c.fill();c.beginPath();c.arc(28,-55,2.8,0,7);c.fill();
+  // head
+  c.fillStyle=BR;c.beginPath();c.arc(18,-45,13,0,7);c.fill();c.stroke();
+  c.fillStyle=TN;c.beginPath();c.ellipse(18,-41,6.5,5.5,0,0,7);c.fill();
+  c.fillStyle="#14213d";c.beginPath();c.ellipse(18,-43.5,2.4,1.8,0,0,7);c.fill();
+  c.beginPath();c.arc(12.5,-48,1.9,0,7);c.fill();c.beginPath();c.arc(23.5,-48,1.9,0,7);c.fill();
+  c.beginPath();c.moveTo(18,-41.7);c.lineTo(18,-39.5);c.stroke();
+  // goggles on forehead
+  c.fillStyle="#5a3a1c";c.fillRect(5,-55,26,3.5);
+  c.fillStyle="#9be7ff";c.beginPath();c.arc(13,-55,4.2,0,7);c.fill();c.stroke();c.beginPath();c.arc(23,-55,4.2,0,7);c.fill();c.stroke();
+  c.restore();
+}
+function cloud(c,x,y,s){c.beginPath();c.arc(x,y,16*s,0,7);c.arc(x+18*s,y-8*s,20*s,0,7);c.arc(x+40*s,y,16*s,0,7);c.rect(x,y,40*s,16*s);c.fill()}
+
+function draw(){
+  var c=cx,sx=G.scrollX,ox=G.shake>0?(Math.random()-.5)*6*G.shake:0;
+  c.save();c.translate(ox,0);
+  var g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"#3aa8f0");g.addColorStop(1,"#cdeeff");c.fillStyle=g;c.fillRect(-10,0,W+20,H);
+  c.fillStyle="#fff6c2";c.beginPath();c.arc(820,70,38,0,7);c.fill();
+  c.fillStyle="rgba(255,255,255,.9)";
+  for(var i=0;i<6;i++){var cxp=((i*330-sx*.2)%1980+1980)%1980-200;cloud(c,cxp,60+(i%3)*45,1+(i%2)*.4)}
+  c.fillStyle="#7bc77e";
+  for(var i=0;i<5;i++){var hx=((i*340-sx*.4)%1700+1700)%1700-250;c.beginPath();c.arc(hx,GROUND+30,120+(i%2)*40,Math.PI,0);c.fill()}
+  c.fillStyle="#58b062";
+  for(var i=0;i<4;i++){var hx2=((i*460-sx*.6)%1840+1840)%1840-250;c.beginPath();c.arc(hx2,GROUND+40,80+(i%2)*30,Math.PI,0);c.fill()}
+  c.fillStyle="#3fa34d";c.fillRect(-10,GROUND,W+20,H-GROUND);
+  c.fillStyle="#7a4a21";c.fillRect(-10,GROUND+14,W+20,H-GROUND-14);
+  c.fillStyle="#6a3e1a";for(var i=-1;i<26;i++){var bx=i*40-(sx%40);c.fillRect(bx,GROUND+30,36,3);c.fillRect(bx+18,GROUND+58,36,3)}
+  c.fillStyle="#2d8a3a";c.fillRect(-10,GROUND,W+20,8);
+  G.entities.forEach(function(e){
+    var x=e.x-sx;if(x<-90||x>W+90)return;
+    if(e.type==="coin"&&!e.got){
+      var w=Math.abs(Math.cos(G.anim*5+e.x*.02))*9+2;
+      c.fillStyle="#ffc233";c.strokeStyle="#14213d";c.lineWidth=2;c.beginPath();c.ellipse(x,e.y,w,10,0,0,7);c.fill();c.stroke();
+    }else if(e.type==="pick"&&!e.got){
+      var p=PICKS[e.kind],bob=Math.sin(G.anim*4)*4;
+      c.fillStyle=p.c;c.strokeStyle="#14213d";c.lineWidth=3;c.beginPath();c.arc(x,e.y+bob,16,0,7);c.fill();c.stroke();
+      c.fillStyle="#14213d";c.font="11px 'Press Start 2P',monospace";c.textAlign="center";c.textBaseline="middle";c.fillText(p.l,x+1,e.y+bob+1);
+    }else if(e.type==="spike"){
+      c.fillStyle="#c9ced8";c.strokeStyle="#14213d";c.lineWidth=2.5;
+      for(var k=0;k<3;k++){var bx2=x+k*(e.w/3);c.beginPath();c.moveTo(bx2,e.y+e.h);c.lineTo(bx2+e.w/6,e.y);c.lineTo(bx2+e.w/3,e.y+e.h);c.closePath();c.fill();c.stroke()}
+    }else if(e.type==="mush"){
+      var wob=Math.sin(G.anim*12+e.x)*2;
+      c.fillStyle="#f6e7c8";c.strokeStyle="#14213d";c.lineWidth=2.5;
+      c.fillRect(x+8,e.y+16,18,12);c.strokeRect(x+8,e.y+16,18,12);
+      c.fillStyle="#14213d";c.fillRect(x+6+wob,e.y+27,10,4);c.fillRect(x+18-wob,e.y+27,10,4);
+      c.fillStyle="#d62839";c.beginPath();c.arc(x+17,e.y+17,17,Math.PI,0);c.closePath();c.fill();c.stroke();
+      c.fillStyle="#fff";c.beginPath();c.arc(x+8,e.y+8,3.2,0,7);c.fill();c.beginPath();c.arc(x+26,e.y+8,3.2,0,7);c.fill();
+      c.fillStyle="#fff";c.fillRect(x+10,e.y+14,5,6);c.fillRect(x+19,e.y+14,5,6);
+      c.fillStyle="#14213d";c.fillRect(x+12,e.y+16,2.5,4);c.fillRect(x+20,e.y+16,2.5,4);
+      c.lineWidth=3;c.beginPath();c.moveTo(x+8,e.y+10);c.lineTo(x+15,e.y+14);c.moveTo(x+27,e.y+10);c.lineTo(x+20,e.y+14);c.stroke();
+    }else if(e.type==="brick"){
+      c.fillStyle="#c75b2a";c.fillRect(x,e.y,e.w,e.h);c.strokeStyle="#14213d";c.lineWidth=3;c.strokeRect(x,e.y,e.w,e.h);
+      c.beginPath();c.moveTo(x,e.y+22);c.lineTo(x+e.w,e.y+22);c.moveTo(x+22,e.y);c.lineTo(x+22,e.y+22);c.moveTo(x+11,e.y+22);c.lineTo(x+11,e.y+e.h);c.moveTo(x+33,e.y+22);c.lineTo(x+33,e.y+e.h);c.stroke();
+    }else if(e.type==="block"){
+      var by=e.y-Math.sin(e.bump*Math.PI)*10,used=e.hit||e.missed;
+      c.fillStyle=used?"#9b8a6a":"#e8772e";c.fillRect(x,by,e.w,e.h);
+      c.strokeStyle="#14213d";c.lineWidth=3;c.strokeRect(x,by,e.w,e.h);
+      if(!used){
+        c.fillStyle="#ffd98a";c.fillRect(x+4,by+4,5,5);c.fillRect(x+e.w-9,by+4,5,5);c.fillRect(x+4,by+e.h-9,5,5);c.fillRect(x+e.w-9,by+e.h-9,5,5);
+        c.fillStyle="#fff";c.font="22px 'Press Start 2P',monospace";c.textAlign="center";c.textBaseline="middle";c.fillText("?",x+e.w/2+1,by+e.h/2+2);
+        c.strokeStyle="rgba(255,255,255,"+(.35+.25*Math.sin(G.anim*6))+")";c.lineWidth=2;c.strokeRect(x-4,by-4,e.w+8,e.h+8);
+      }
+    }else if(e.type==="flag"){
+      c.fillStyle="#fff";c.fillRect(x,e.y,6,e.h);c.strokeStyle="#14213d";c.lineWidth=2;c.strokeRect(x,e.y,6,e.h);
+      c.fillStyle="#e63946";c.beginPath();c.moveTo(x+6,e.y+4);c.lineTo(x+62,e.y+22+Math.sin(G.anim*6)*3);c.lineTo(x+6,e.y+42);c.closePath();c.fill();c.stroke();
+      c.fillStyle="#ffc233";c.beginPath();c.arc(x+3,e.y-4,7,0,7);c.fill();c.stroke();
+    }
+  });
+  var air=!G.onGround,flash=G.invuln>0&&Math.floor(G.anim*14)%2===0;
+  if(!flash)drawCadet(c,PX,G.py+PH,G.level,G.anim,air,G.plane>0);
+  if(G.shield){c.strokeStyle="rgba(120,220,255,.95)";c.fillStyle="rgba(120,220,255,.18)";c.lineWidth=3;c.beginPath();c.arc(PX+17,G.py+PH/2-4,40,0,7);c.fill();c.stroke()}
+  if(G.double>0){c.fillStyle="#14213d";c.font="10px 'Press Start 2P',monospace";c.textAlign="center";c.fillText("x2",PX+17,G.py-24)}
+  G.particles.forEach(function(p){
+    if(p.text){c.globalAlpha=Math.min(1,p.life*1.5);c.fillStyle=p.col;c.strokeStyle="#14213d";c.lineWidth=4;c.font="14px 'Press Start 2P',monospace";c.textAlign="center";c.strokeText(p.text,p.x,p.y);c.fillText(p.text,p.x,p.y);c.globalAlpha=1}
+    else{c.globalAlpha=Math.max(0,p.life*2);c.fillStyle=p.col;c.fillRect(p.x,p.y,p.s,p.s);c.globalAlpha=1}
+  });
+  c.restore();
+}
+
+/* ------------------------------------------------------------------ */
+/* QUESTION PICKER (balanced topics + spaced revision of misses)       */
+/* ------------------------------------------------------------------ */
+function pickQuestion(){
+  G.qSinceStart++;
+  // revision round
+  for(var i=0;i<G.review.length;i++){
+    if(G.review[i].due<=G.qSinceStart&&Math.random()<.6){
+      var r=G.review.splice(i,1)[0];return{q:r.q,review:true};
+    }
+  }
+  // choose topic with fewest questions asked, with some randomness
+  var ts=G.topics,min=1e9;
+  ts.forEach(function(t){min=Math.min(min,G.asked[t]||0)});
+  var low=ts.filter(function(t){return (G.asked[t]||0)<=min});
+  var topic=Math.random()<.7?pick(low):pick(ts);
+  G.asked[topic]=(G.asked[topic]||0)+1;
+  // generated?
+  if(GENS[topic]&&Math.random()<.28){var q=pick(GENS[topic])();q.id="g"+Math.random();return{q:q}}
+  var maxD=G.level<2?2:3;
+  var pool=[];
+  BANK.forEach(function(b,idx){
+    if(b[0]!==topic||b[1]>maxD)return;
+    if(!G.seenIds[idx])pool.push(idx);
+  });
+  if(!pool.length){
+    BANK.forEach(function(b,idx){if(b[0]===topic)delete G.seenIds[idx]});
+    BANK.forEach(function(b,idx){if(b[0]===topic&&b[1]<=maxD)pool.push(idx)});
+  }
+  // gently favour harder questions at higher levels
+  pool.sort(function(a,b){return Math.random()-.5});
+  if(G.level>=3)pool.sort(function(a,b){return (BANK[b][1]-BANK[a][1])*(Math.random()<.6?1:0)});
+  var idx=pool[0];G.seenIds[idx]=1;
+  var b=BANK[idx];
+  return{q:{t:b[0],d:b[1],q:b[2],c:b[3],w:b[4],why:b[5],id:"b"+idx}};
+}
+
+/* ------------------------------------------------------------------ */
+/* QUESTION MODAL                                                       */
+/* ------------------------------------------------------------------ */
+var CUR=null,feedTimer=null;
+function openQuestion(){
+  G.modal=true;
+  var p=pickQuestion();var q=p.q;
+  CUR={q:q,review:!!p.review,opts:shuffle([q.c].concat(q.w)),done:false};
+  var tp=TOPICS[q.t];
+  $("qMeta").innerHTML='<span class="topic-pill" style="background:'+tp.color+'">'+esc(tp.name)+'</span>'+
+    (CUR.review?'<span class="topic-pill" style="background:#14213d">Revision round</span>':'')+
+    '<span class="muted" style="font-weight:800">Level '+G.level+' &middot; block '+(G.levelDone+1)+' of '+G.levelBlocks+'</span>';
+  $("qText").textContent=q.q;
+  var h="";CUR.opts.forEach(function(o,i){h+='<button class="opt" data-i="'+i+'"><b>'+"ABCD"[i]+'</b><span>'+esc(o)+'</span></button>'});
+  $("qOpts").innerHTML=h;
+  $("qFeed").innerHTML="";
+  renderQBoost();
+  $("qModal").classList.add("open");
+  $("qModal").scrollTop=0;
+  var first=$("qOpts").querySelector(".opt");if(first)first.focus({preventScroll:true});
+}
+function renderQBoost(){
+  var h="";
+  if(G.inv.half>0)h+='<button class="btn small alt" id="useHalf">50/50 ('+G.inv.half+')</button>';
+  if(G.inv.skip>0)h+='<button class="btn small alt" id="useSkip">Skip question ('+G.inv.skip+')</button>';
+  $("qBoost").innerHTML=h;
+  var hb=$("useHalf");if(hb)hb.addEventListener("click",useHalf);
+  var sb=$("useSkip");if(sb)sb.addEventListener("click",useSkip);
+}
+function useHalf(){
+  if(!CUR||CUR.done||G.inv.half<1)return;
+  G.inv.half--;
+  var wrongs=[].slice.call($("qOpts").querySelectorAll(".opt")).filter(function(b){return CUR.opts[+b.dataset.i]!==CUR.q.c&&!b.classList.contains("gone")});
+  shuffle(wrongs).slice(0,2).forEach(function(b){b.classList.add("gone");b.disabled=true});
+  renderQBoost();updateHUD();
+}
+function useSkip(){
+  if(!CUR||CUR.done||G.inv.skip<1)return;
+  G.inv.skip--;CUR.done=true;
+  // skipped block still counts as cleared, no penalty
+  G.levelDone++;closeQuestion();updateHUD();showToast("Skipped. No penalty.");
+}
+function answer(i){
+  if(!CUR||CUR.done)return;
+  var gb=$("qOpts").querySelectorAll(".opt")[i];if(!gb||gb.classList.contains("gone"))return;
+  var q=CUR.q,chosen=CUR.opts[i],ok=chosen===q.c;CUR.done=true;
+  var btns=$("qOpts").querySelectorAll(".opt");
+  btns.forEach(function(b){b.disabled=true;var o=CUR.opts[+b.dataset.i];if(o===q.c)b.classList.add("right");else if(+b.dataset.i===i)b.classList.add("wrong")});
+  $("qBoost").innerHTML="";
+  G.answered++;G.levelDone++;
+  var tp=G.perTopic[q.t]||(G.perTopic[q.t]={n:0,ok:0});tp.n++;
+  var fb="";
+  if(ok){
+    tp.ok++;G.correct++;G.streak++;G.bestStreak=Math.max(G.bestStreak,G.streak);
+    var mult=G.double>0?2:1;if(G.double>0)G.double--;
+    var gainC=5*mult,gainS=(100+Math.min(G.streak,10)*10)*mult;
+    G.coins+=gainC;G.score+=gainS;SFX.right();
+    var extra="";
+    if(G.streak%3===0){extra=awardBooster()}
+    fb='<div class="feedback good"><h3>Correct! +'+gainC+' coins, +'+gainS+' points'+(mult>1?" (double)":"")+'</h3><div>'+esc(q.why)+'</div>'+(extra?'<div style="margin-top:8px"><b>'+extra+'</b></div>':'')+
+       '<div class="row" style="margin-top:10px"><button class="btn go" id="contBtn">Keep flying</button></div></div>';
+    floatText("+"+gainC,PX+10,G.py-20,"#ffc233");
+  }else{
+    G.streak=0;SFX.wrong();
+    var line;
+    if(G.shield){G.shield=false;line="Your shield took the hit. No coins lost."}
+    else{var lose=Math.min(3,G.coins);G.coins-=lose;G.score=Math.max(0,G.score-20);line="You lose "+lose+" coin"+(lose===1?"":"s")+". Keep going."}
+    var key=q.q;
+    if(!G.missedKeys[key]){G.missedKeys[key]=1;G.missed.push({t:q.t,q:q.q,c:q.c,why:q.why})}
+    G.review.push({q:q,due:G.qSinceStart+3+ri(0,2)});
+    fb='<div class="feedback bad"><h3>Not this time. '+line+'</h3><div><b>Right answer:</b> '+esc(q.c)+'</div><div style="margin-top:6px">'+esc(q.why)+'</div>'+
+       '<div class="muted" style="margin-top:6px">This question will come back later so you can lock it in.</div>'+
+       '<div class="row" style="margin-top:10px"><button class="btn go" id="contBtn">Keep flying</button></div></div>';
+  }
+  $("qFeed").innerHTML=fb;
+  var cb=$("contBtn");cb.addEventListener("click",closeQuestion);cb.focus({preventScroll:true});
+  updateHUD();
+  clearTimeout(feedTimer);
+}
+function awardBooster(){
+  SFX.boost();
+  if(Math.random()<.5&&!G.shield){G.shield=true;return "Streak reward: Shield! It blocks the next mushroom, spike or wrong answer."}
+  G.plane=12;return "Streak reward: Plane! Ride it for 12 seconds. Mushrooms and spikes cannot hurt you.";
+}
+function closeQuestion(){
+  clearTimeout(feedTimer);
+  $("qModal").classList.remove("open");CUR=null;
+  G.modal=false;G.lastT=performance.now();
+  if(G.limit&&G.elapsed>=G.limit){endGame();return}
+  updateHUD();
+}
+
+/* ------------------------------------------------------------------ */
+/* LEVEL CLEAR                                                          */
+/* ------------------------------------------------------------------ */
+function levelClear(){
+  G.modal=true;SFX.level();
+  var bonus=200+G.level*50;G.score+=bonus;G.coins+=10;
+  var next=G.level+1;
+  $("gCard").innerHTML='<h2 id="gTitle" style="font-size:1rem;margin-bottom:10px">Level '+G.level+' cleared!</h2>'+
+    '<div class="row" style="gap:20px"><canvas id="rankCv" width="120" height="110" style="width:120px;height:110px;border:3px solid var(--ink);border-radius:6px;background:#bfe9ff" aria-hidden="true"></canvas>'+
+    '<div class="grow"><p style="margin:0 0 4px" class="muted">New rank</p><p class="big" style="font-size:1.1rem;margin:0 0 10px">'+esc(rankName(next))+'</p>'+
+    '<p style="margin:0">+'+bonus+' points and +10 coins for reaching the flag.</p></div></div>'+
+    '<p class="muted">Next level has '+Math.min(5+next,11)+' question blocks and a little more speed.</p>'+
+    '<div class="row"><button class="btn go" id="nextLv">Fly to level '+next+'</button><button class="btn alt" id="endNow">Finish and see summary</button></div>';
+  $("gModal").classList.add("open");
+  var rc=$("rankCv").getContext("2d");rc.fillStyle="#bfe9ff";rc.fillRect(0,0,120,110);
+  rc.save();rc.translate(30,0);rc.scale(1.5,1.5);drawCadet(rc,10,68,next,1,false);rc.restore();
+  $("nextLv").addEventListener("click",function(){
+    $("gModal").classList.remove("open");G.modal=false;startLevel(next);G.lastT=performance.now();updateHUD();
+  });
+  $("nextLv").focus();
+  $("endNow").addEventListener("click",function(){$("gModal").classList.remove("open");G.level=next;endGame()});
+  updateHUD();
+}
+
+/* ------------------------------------------------------------------ */
+/* HUD / PAUSE / TOAST                                                  */
+/* ------------------------------------------------------------------ */
+function updateHUD(){
+  $("hCoins").textContent=G.coins;$("hScore").textContent=G.score;$("hStreak").textContent=G.streak;
+  $("hRank").innerHTML=chevSVG(G.level,22)+" Level "+G.level+" · "+esc(rankName(G.level));
+  $("hLevel").textContent=G.levelDone+" / "+G.levelBlocks+" question blocks";
+  $("hBar").style.width=Math.min(100,G.levelDone/G.levelBlocks*100)+"%";
+  $("hTime").textContent=G.limit?fmtTime(G.limit-G.elapsed):"No limit";
+  var h="";
+  h+='<span class="item'+(G.shield?" on":"")+'">Shield: '+(G.shield?"ready":"none")+'</span>';
+  h+='<span class="item'+(G.plane>0?" on":"")+'">Plane: '+(G.plane>0?Math.ceil(G.plane)+"s":"none")+'</span>';
+  h+='<span class="item'+(G.double>0?" on":"")+'">Double: '+(G.double>0?G.double+" left":"none")+'</span>';
+  h+='<span class="item'+(G.inv.half>0?" on":"")+'">50/50: '+G.inv.half+'</span>';
+  h+='<span class="item'+(G.inv.skip>0?" on":"")+'">Skip: '+G.inv.skip+'</span>';
+  $("inv").innerHTML=h;
+}
+var toastT=null;
+function showToast(msg){
+  var t=document.querySelector(".toast");if(t)t.remove();
+  t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);
+  clearTimeout(toastT);toastT=setTimeout(function(){t.remove()},2200);
+}
+function pauseToggle(){
+  if(!G||G.over||G.modal)return;
+  G.paused=!G.paused;
+  if(G.paused){
+    $("gCard").innerHTML='<h2 id="gTitle" style="font-size:1rem;margin-bottom:10px">Paused</h2><p class="muted">The clock is paused. Take a breather, then jump back in.</p><div class="row"><button class="btn go" id="resumeBtn">Resume</button><button class="btn alt" id="quitBtn">End flight</button></div>';
+    $("gModal").classList.add("open");
+    $("resumeBtn").addEventListener("click",pauseToggle);$("resumeBtn").focus();
+    $("quitBtn").addEventListener("click",function(){$("gModal").classList.remove("open");G.paused=false;endGame()});
+    G.pausedAt=performance.now();
+  }else{
+    $("gModal").classList.remove("open");G.lastT=performance.now();
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* SUMMARY                                                              */
+/* ------------------------------------------------------------------ */
+function endGame(){
+  if(G.over)return;G.over=true;
+  $("qModal").classList.remove("open");$("gModal").classList.remove("open");
+  var acc=G.answered?Math.round(G.correct/G.answered*100):0;
+  var rec={name:G.name,score:G.score,coins:G.coins,acc:acc,level:G.level,correct:G.correct};
+  var board=store.get("hgrsciencerun.board",[]);board.push({name:rec.name,score:rec.score,level:rec.level,when:Date.now()});
+  board.sort(function(a,b){return b.score-a.score});board=board.slice(0,10);store.set("hgrsciencerun.board",board);
+  var rank=board.findIndex(function(r){return r.score===rec.score&&r.name===rec.name})+1;
+  var code=makeCode(rec);
+  var mins=Math.round(G.elapsed/60);
+  var h='<div class="panel"><h1 class="big" style="margin-bottom:6px">Flight complete</h1>'+
+    '<p style="margin:0" class="muted">'+esc(G.name)+' &middot; '+esc(rankName(G.level))+' &middot; '+mins+' min in the air'+(rank&&rank<=10?' &middot; #'+rank+' on this device':'')+'</p>'+
+    '<div class="grid4"><div class="stat"><span class="k">Score</span><span class="v">'+G.score+'</span></div>'+
+    '<div class="stat"><span class="k">Coins</span><span class="v">'+G.coins+'</span></div>'+
+    '<div class="stat"><span class="k">Accuracy</span><span class="v">'+acc+'%</span></div>'+
+    '<div class="stat"><span class="k">Best streak</span><span class="v">'+G.bestStreak+'</span></div>'+
+    '<div class="stat"><span class="k">Level reached</span><span class="v">'+G.level+'</span></div>'+
+    '<div class="stat"><span class="k">Questions</span><span class="v">'+G.correct+'/'+G.answered+'</span></div></div>';
+  h+='<h2 style="font-size:.8rem;margin:18px 0 8px">Topic check</h2><div class="topic-bars">';
+  TKEYS.forEach(function(k){
+    var s=G.perTopic[k];
+    if(!s){h+='<div class="tb"><span>'+esc(TOPICS[k].name)+'</span><div class="bar"></div><span class="pct muted">--</span></div>';return}
+    var p=Math.round(s.ok/s.n*100);
+    h+='<div class="tb"><span>'+esc(TOPICS[k].name)+'</span><div class="bar"><i style="width:'+p+'%;background:'+(p>=70?"var(--good)":p>=45?"#e0a100":"var(--bad)")+'"></i></div><span class="pct">'+p+'% ('+s.ok+'/'+s.n+')</span></div>';
+  });
+  h+='</div>';
+  if(G.missed.length){
+    h+='<h2 style="font-size:.8rem;margin:18px 0 4px">Revise these ('+G.missed.length+')</h2><ul class="missed">';
+    G.missed.slice(0,20).forEach(function(m){h+='<li><div class="muted" style="font-size:.8rem;font-weight:800">'+esc(TOPICS[m.t].name)+'</div><div>'+esc(m.q)+'</div><div style="margin-top:4px"><b>Answer:</b> '+esc(m.c)+'</div><div class="muted" style="font-size:.9rem">'+esc(m.why)+'</div></li>'});
+    h+='</ul>';
+  }else if(G.answered){h+='<p style="margin-top:16px"><b>No missed questions. Brilliant flying.</b></p>'}
+  h+='<h2 style="font-size:.8rem;margin:18px 0 6px">Your score code</h2><p class="muted" style="margin:0 0 6px">Share this with your teacher or class to join the class board.</p><div class="code" id="codeBox">'+esc(code)+'</div>'+
+    '<div class="row" style="margin-top:12px"><button class="btn" id="copyBtn">Copy code</button><button class="btn go" id="againBtn">Fly again</button></div></div>';
+  $("summary").innerHTML=h;
+  $("game").style.display="none";$("summary").style.display="block";window.scrollTo(0,0);
+  $("copyBtn").addEventListener("click",function(){
+    var done=function(){showToast("Code copied")};
+    var sel=function(){var r=document.createRange();r.selectNodeContents($("codeBox"));var s=window.getSelection();s.removeAllRanges();s.addRange(r);showToast("Press Ctrl+C or long-press to copy")};
+    try{navigator.clipboard.writeText(code).then(done,sel)}catch(e){sel()}
+  });
+  $("againBtn").addEventListener("click",function(){
+    $("summary").style.display="none";$("menu").style.display="grid";renderLocalBoard();window.scrollTo(0,0);
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* INPUT                                                                */
+/* ------------------------------------------------------------------ */
+document.addEventListener("keydown",function(e){
+  if(!G||G.over||$("game").style.display==="none")return;
+  var tag=(e.target&&e.target.tagName)||"";
+  if(CUR&&!CUR.done&&/^[1-4]$/.test(e.key)){answer(+e.key-1);e.preventDefault();return}
+  if(CUR&&CUR.done&&e.key==="Enter"){return}
+  if(G.modal||G.paused){ if(e.key==="Escape"&&G.paused)pauseToggle();return}
+  if(e.key===" "||e.key==="ArrowUp"||e.key==="w"||e.key==="W"){if(tag!=="BUTTON"||e.key!==" "){jump()}e.preventDefault()}
+  else if(e.key==="Escape"||e.key==="p"||e.key==="P")pauseToggle();
+});
+$("game").addEventListener("pointerdown",function(e){if(e.target.closest("button,a,input,textarea"))return;e.preventDefault();jump()});
+$("qOpts").addEventListener("click",function(e){var b=e.target.closest(".opt");if(b&&!b.disabled)answer(+b.dataset.i)});
+$("pauseBtn").addEventListener("click",function(){this.blur();pauseToggle()});
+document.addEventListener("visibilitychange",function(){if(document.hidden&&G&&!G.over&&!G.modal&&!G.paused&&$("game").style.display!=="none")pauseToggle()});
+
+buildMenu();
+window.__sky={BANK:BANK,GENS:GENS,TOPICS:TOPICS,getG:function(){return G}};
+})();
+</script>
+
+</body>
+</html>
