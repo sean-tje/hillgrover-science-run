@@ -123,6 +123,33 @@ canvas{width:100%;height:auto;display:block}
 .feedback h3{font-size:.8rem;margin-bottom:6px}
 .boost-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 
+/* wardrobe, mini-games, boss */
+.shop{display:grid;grid-template-columns:140px minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:600px){.shop{grid-template-columns:minmax(0,1fr)}}
+.shop canvas{width:140px;height:150px;border:3px solid var(--line);border-radius:6px;background:#bfe9ff}
+.cat{margin-bottom:10px}.cat h3{font-size:.62rem;margin-bottom:6px}
+.chip.lock{border-style:dashed;background:#fff8e1}
+.chip.lock[aria-pressed=true]{background:var(--ink)}
+details summary{cursor:pointer;min-height:36px;display:flex;align-items:center}
+.job{font-size:1.2rem;font-weight:800;background:#fff;border:3px solid var(--line);border-radius:6px;padding:12px;min-height:76px;margin-bottom:12px;display:flex;align-items:center}
+.org-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn.org{min-height:56px;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn.right{background:#c9f0d4;border-color:var(--good)}
+.btn.wrong{background:#fbd0cf;border-color:var(--bad)}
+#ninjaCv{touch-action:none}
+.hp{height:16px;border:3px solid var(--line);border-radius:8px;background:#fff;overflow:hidden;margin-bottom:10px}
+.hp>i{display:block;height:100%;background:var(--bad);transition:width .25s}
+.arena{position:relative;aspect-ratio:3/2;border:4px solid var(--line);border-radius:6px;background:linear-gradient(#5b3a8a,#2b1b4d);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.arena canvas{position:absolute;left:31%;top:3%;width:38%;height:62%;transition:transform .15s}
+.arena canvas.hit{transform:scale(1.08) rotate(3deg)}
+.target{position:absolute;width:27%;height:28%;border:4px solid var(--line);border-radius:8px;background:#fff2c6;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;font-family:var(--font-display);padding:4px}
+.target .n{font-size:clamp(.7rem,2.6vw,1.2rem)}
+.target .c{font-size:clamp(.5rem,1.6vw,.7rem);margin-top:6px;color:var(--muted)}
+.target.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@media(prefers-reduced-motion:reduce){.target.shake{animation:none}.arena canvas{transition:none}}
+
 /* summary */
 .big{font-family:var(--font-display);font-size:clamp(1.4rem,5vw,2.2rem)}
 .grid4{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-block:14px}
@@ -171,17 +198,32 @@ canvas{width:100%;height:auto;display:block}
       <h2 style="font-size:.8rem;margin-bottom:10px">How to play</h2>
       <ul class="how">
         <li><b>Tap anywhere</b> on the game (or press Space) to jump. You can jump twice in the air.</li>
-        <li>Collect coins. Bump an orange <b>?</b> block from below. Most give a question. Some throw out coins or a booster. A few drop an angry mushroom.</li>
-        <li><b>Jump over</b> roaming mushrooms and floor spikes, or land on a mushroom to squash it. Touching one costs you 3 coins.</li>
+        <li>Collect coins. Bump a <b>?</b> block from below. Orange blocks give a question, coins, a booster, or an angry mushroom. <b>Purple</b> blocks start a 20-second mini-game.</li>
+        <li><b>Jump over</b> roaming mushrooms and floor spikes, or land on a mushroom to squash it. Touching one costs 3 coins.</li>
         <li><b>Right answer:</b> coins, points and a streak bonus. Every 3 in a row gives a Shield, or a Plane that flies you over danger and hits blocks for you.</li>
-        <li><b>Wrong answer:</b> you lose 3 coins and see the right answer. You never get knocked out.</li>
-        <li>Missed questions come back later. Clear every question block, reach the flag and your bear earns another chevron.</li>
+        <li><b>Wrong answer:</b> you lose 3 coins and see the right answer. Stuck? Spend 5 coins on a hint that removes a wrong option.</li>
+        <li>Clear every question block and a Mock Exam Boss blocks the flag. Beat it by tapping the boards, then reach the flag to earn a chevron.</li>
       </ul>
     </div>
     <div class="panel">
       <h2 style="font-size:.8rem;margin-bottom:10px">Top scores on this device</h2>
       <div class="scroll-x" id="localBoard"></div>
     </div>
+  </div>
+
+  <div class="panel" style="grid-column:1/-1">
+    <div class="row" style="justify-content:space-between"><h2 style="font-size:.8rem">Bear wardrobe</h2>
+      <span class="stat" style="flex-direction:row;gap:8px;align-items:center"><span class="k">Bank</span><span class="v" id="bankAmt">0</span><span class="k">coins</span></span></div>
+    <p class="muted" style="margin:6px 0 12px">The coins you finish a flight with go into your bank. Spend them on looks. Your bear is saved on this device under your name.</p>
+    <div class="shop"><canvas id="bearPrev" width="140" height="150" aria-label="Preview of your bear"></canvas><div id="shopItems"></div></div>
+    <details style="margin-top:14px"><summary><b>Back up or move my bear</b></summary>
+      <p class="muted" style="margin:8px 0">A backup code lets you restore your bear on another device, or if the browser data is cleared.</p>
+      <div class="row"><button class="btn small" id="backupBtn">Show my backup code</button></div>
+      <div class="code" id="backupBox" hidden style="margin-top:8px"></div>
+      <label for="restoreIn" class="label" style="display:block;margin-top:12px">Restore from a backup code</label>
+      <textarea id="restoreIn" placeholder="HSV-..." style="min-height:60px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn small alt" id="restoreBtn">Restore</button></div>
+    </details>
   </div>
 
   <div class="panel" style="grid-column:1/-1">
@@ -213,7 +255,7 @@ canvas{width:100%;height:auto;display:block}
     <span class="grow"></span>
     <button class="btn alt small" id="pauseBtn">Pause</button>
   </div>
-  <p class="hint muted">Tap the game or press Space to jump. Hit ? blocks from below. Jump over mushrooms and spikes.</p>
+  <p class="hint muted">Tap the game or press Space to jump. Hit ? blocks from below. Purple ? blocks are mini-games.</p>
 </section>
 
 <!-- SUMMARY -->
@@ -231,6 +273,10 @@ canvas{width:100%;height:auto;display:block}
     <div id="qFeed"></div>
   </div>
 </div>
+
+<!-- MINI-GAME + BOSS MODALS -->
+<div class="modal" id="mgModal" role="dialog" aria-modal="true" aria-labelledby="mgTitle"><div class="card" id="mgCard"></div></div>
+<div class="modal" id="bossModal" role="dialog" aria-modal="true" aria-labelledby="bossTitle"><div class="card" id="bossCard" style="max-width:760px"></div></div>
 
 <!-- GENERIC MODAL (pause, level up) -->
 <div class="modal" id="gModal" role="dialog" aria-modal="true" aria-labelledby="gTitle">
@@ -474,6 +520,78 @@ var SFX={
 };
 
 /* ------------------------------------------------------------------ */
+/* PROFILE + WARDROBE (saved on the device under the pilot's name)      */
+/* ------------------------------------------------------------------ */
+var FUR={brown:{n:"Classic brown",c:"#a8703a",cost:0},honey:{n:"Honey",c:"#d9a441",cost:50},cocoa:{n:"Cocoa",c:"#6e4527",cost:50},polar:{n:"Polar white",c:"#f2efe6",cost:100},sky:{n:"Sky blue",c:"#6cc4ff",cost:150}};
+var HATS={none:{n:"No hat",cost:0},cap:{n:"Pilot cap",cost:40},party:{n:"Party hat",cost:60},helmet:{n:"Flight helmet",cost:80},tophat:{n:"Top hat",cost:100},crown:{n:"Gold crown",cost:150}};
+var ACCS={none:{n:"Nothing",cost:0},bowtie:{n:"Bow tie",cost:30},scarf:{n:"Red scarf",cost:40},shades:{n:"Sunglasses",cost:60},medal:{n:"Gold medal",cost:120}};
+var CATS={fur:FUR,hat:HATS,acc:ACCS};
+function curName(){return ($("nameIn").value||"").trim().slice(0,14)||"Pilot"}
+function pkey(n){return n.trim().toLowerCase()}
+function getProfiles(){return store.get("hgrsciencerun.profiles",{})}
+function loadProfile(name){
+  var p=getProfiles()[pkey(name)];
+  if(!p)p={name:name,bank:0,owned:["fur:brown","hat:none","acc:none"],equip:{fur:"brown",hat:"none",acc:"none"}};
+  return p;
+}
+function saveProfile(p){var all=getProfiles();all[pkey(p.name)]=p;store.set("hgrsciencerun.profiles",all)}
+function backupCode(p){
+  var j=JSON.stringify({n:p.name,b:p.bank,o:p.owned,e:p.equip});
+  return "HSV-"+btoa(unescape(encodeURIComponent(j))).replace(/=+$/,"").replace(/\+/g,"-").replace(/\//g,"_")+"-"+hash(j);
+}
+function readBackup(c){
+  try{
+    var m=c.trim().match(/^HSV-([A-Za-z0-9_-]+)-([0-9A-Z]{3})$/);if(!m)return null;
+    var s=m[1].replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";
+    var j=decodeURIComponent(escape(atob(s)));if(hash(j)!==m[2])return null;
+    var o=JSON.parse(j),own=(o.o||[]).filter(function(k){var a=String(k).split(":");return CATS[a[0]]&&CATS[a[0]][a[1]]});
+    var eq={fur:"brown",hat:"none",acc:"none"};for(var k in eq){if(o.e&&CATS[k][o.e[k]])eq[k]=o.e[k]}
+    return{name:String(o.n).slice(0,14),bank:Math.max(0,Math.floor(+o.b||0)),owned:own,equip:eq};
+  }catch(e){return null}
+}
+var WP=null;
+function renderWardrobe(){
+  WP=loadProfile(curName());
+  $("bankAmt").textContent=WP.bank;
+  var h="";
+  [["fur","Fur"],["hat","Hat"],["acc","Extra"]].forEach(function(c){
+    h+='<div class="cat"><h3>'+c[1]+'</h3><div class="chips">';
+    Object.keys(CATS[c[0]]).forEach(function(id){
+      var it=CATS[c[0]][id],key=c[0]+":"+id,own=WP.owned.indexOf(key)>-1,on=WP.equip[c[0]]===id;
+      h+='<button class="chip'+(own?'':' lock')+'" data-k="'+key+'" aria-pressed="'+on+'">'+esc(it.n)+(own?'':' &middot; '+it.cost+' coins')+'</button>';
+    });
+    h+='</div></div>';
+  });
+  $("shopItems").innerHTML=h;
+  var cv2=$("bearPrev"),c=cv2.getContext("2d");
+  c.fillStyle="#bfe9ff";c.fillRect(0,0,cv2.width,cv2.height);
+  c.save();c.translate(36,0);c.scale(1.7,1.7);drawCadet(c,10,78,3,.3,false,false,WP.equip);c.restore();
+}
+function buildWardrobe(){
+  $("nameIn").addEventListener("input",renderWardrobe);
+  $("shopItems").addEventListener("click",function(e){
+    var b=e.target.closest(".chip");if(!b)return;
+    var a=b.dataset.k.split(":"),it=CATS[a[0]][a[1]];
+    if(WP.owned.indexOf(b.dataset.k)<0){
+      if(WP.bank<it.cost){showToast("You need "+(it.cost-WP.bank)+" more coins.");return}
+      WP.bank-=it.cost;WP.owned.push(b.dataset.k);showToast("Bought: "+it.n);
+    }
+    WP.equip[a[0]]=a[1];saveProfile(WP);renderWardrobe();
+  });
+  $("backupBtn").addEventListener("click",function(){
+    var code=backupCode(loadProfile(curName()));
+    $("backupBox").textContent=code;$("backupBox").hidden=false;
+    try{navigator.clipboard.writeText(code).then(function(){showToast("Backup code copied")},function(){showToast("Select the code and copy it")})}catch(e){showToast("Select the code and copy it")}
+  });
+  $("restoreBtn").addEventListener("click",function(){
+    var p=readBackup($("restoreIn").value);
+    if(!p){showToast("That backup code is not valid. Copy it in full.");return}
+    saveProfile(p);$("nameIn").value=p.name;store.set("hgrsciencerun.name",p.name);renderWardrobe();showToast("Restored "+p.name+"'s bear");
+  });
+  renderWardrobe();
+}
+
+/* ------------------------------------------------------------------ */
 /* MENU                                                                 */
 /* ------------------------------------------------------------------ */
 function buildMenu(){
@@ -496,6 +614,7 @@ function buildMenu(){
   $("soundBtn").addEventListener("click",function(){cfg.sound=!cfg.sound;this.setAttribute("aria-pressed",String(cfg.sound));this.textContent="Sound: "+(cfg.sound?"on":"off")});
   $("startBtn").addEventListener("click",startGame);
   $("rankBtn").addEventListener("click",rankCodes);
+  buildWardrobe();
   renderLocalBoard();
 }
 function renderLocalBoard(){
@@ -562,7 +681,7 @@ function newGame(){
   };
 }
 function startGame(){
-  G=newGame();startLevel(1);
+  G=newGame();G.look=loadProfile(G.name).equip;startLevel(1);
   $("menu").style.display="none";$("summary").style.display="none";$("game").style.display="block";
   window.scrollTo(0,0);
   G.lastT=performance.now();
@@ -591,14 +710,14 @@ function addEnemy(x){
     G.entities.push({type:"coin",x:x-20,y:GROUND-75,got:false});G.entities.push({type:"coin",x:x+20,y:GROUND-100,got:false});G.entities.push({type:"coin",x:x+60,y:GROUND-75,got:false});
   }else addMushroom(x,GROUND-30,0);
 }
-function surpriseKind(){var r=Math.random();return r<.52?"coin":r<.92?"boost":"mush"}
+function surpriseKind(){var r=Math.random();return r<.36?"mini":r<.64?"coin":r<.93?"boost":"mush"}
 
 function spawnPatterns(){
   while(G.nextX<G.scrollX+W+240){
     var x=G.nextX,out=outstandingBlocks(),need=G.levelBlocks-G.levelDone-out;
     var enemyP=Math.min(.35+G.level*.05,.75),n=G.patternN;
     if(need<=0&&!G.flagSpawned&&out===0){
-      G.entities.push({type:"flag",x:x+250,y:GROUND-170,w:14,h:170});G.flagSpawned=true;G.nextX=x+900;
+      G.entities.push({type:"boss",x:x+250,y:GROUND-170,w:110,h:170,dead:false,fought:false});G.entities.push({type:"flag",x:x+640,y:GROUND-170,w:14,h:170});G.flagSpawned=true;G.nextX=x+1300;
       addCoinRow(x,8,GROUND-30);continue;
     }
     if(need>0&&n%2===1){
@@ -701,8 +820,11 @@ function step(dt){
       if(sx+e.w>px0&&sx<px1&&e.y+e.h>py0&&e.y<py1){
         e.hit=true;e.bump=1;G.vy=Math.max(G.vy,120);SFX.block();burst(sx+e.w/2,e.y,"#ffc233",10);
         if(e.kind==="q"){openQuestion();return}
+        if(e.kind==="mini"){openMini();return}
         surprise(e,sx);
       }else if(sx+e.w<px0-60){e.missed=true;if(e.kind==="q")showToast("Missed a block. Another one is coming.")}
+    }else if(e.type==="boss"&&!e.dead){
+      if(!e.fought&&sx<px1){e.fought=true;openBoss(e);return}
     }else if(e.type==="flag"&&!e.done){
       if(sx<px1&&sx+e.w>px0){e.done=true;levelClear();return}
     }
@@ -730,7 +852,8 @@ function chevSVG(level,size){
   for(var i=0;i<n;i++){var y=3+i*sp;s+='<polyline points="4,'+(y+4)+' 11,'+y+' 18,'+(y+4)+'" fill="none" stroke="'+col+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>'}
   return '<svg class="chev" width="'+size+'" height="'+size+'" viewBox="0 0 22 22" role="img" aria-label="Rank: '+n+' chevron'+(n>1?'s':'')+'"><rect width="22" height="22" rx="4" fill="#3f7d3a"/>'+s+'</svg>';
 }
-function drawCadet(c,x,feetY,level,t,air,plane){
+function drawCadet(c,x,feetY,level,t,air,plane,look){
+  look=look||{fur:"brown",hat:"none",acc:"none"};
   var n=chevCount(level),tc=TIERS[Math.min(Math.floor((level-1)/6),3)];
   var leg=air?0:Math.sin(t*14)*6;
   c.save();c.translate(x,feetY);c.lineWidth=2;c.strokeStyle="#14213d";c.lineJoin="round";
@@ -742,30 +865,47 @@ function drawCadet(c,x,feetY,level,t,air,plane){
     c.fillStyle="#14213d";c.fillRect(49,-12+Math.sin(t*50)*2,4,22-Math.sin(t*50)*4);
     c.translate(0,-8);
   }
-  var G1="#3f7d3a",BR="#a8703a",TN="#e0b98a",PW2="#7a4a21";
-  // legs
+  var G1="#3f7d3a",BR=(FUR[look.fur]||FUR.brown).c,TN=look.fur==="polar"?"#e3d2b4":"#e0b98a",PW2="#7a4a21",hat=look.hat,acc=look.acc;
   c.fillStyle=G1;c.fillRect(8+leg*.4,-14,9,14);c.strokeRect(8+leg*.4,-14,9,14);c.fillRect(19-leg*.4,-14,9,14);c.strokeRect(19-leg*.4,-14,9,14);
   c.fillStyle=PW2;c.fillRect(7+leg*.4,-4,11,5);c.fillRect(18-leg*.4,-4,11,5);
-  // body + arms
   c.fillStyle=G1;c.fillRect(7,-37,22,25);c.strokeRect(7,-37,22,25);
   c.fillRect(1,-35,7,13);c.strokeRect(1,-35,7,13);c.fillRect(28,-35,7,13);c.strokeRect(28,-35,7,13);
   c.fillStyle=BR;c.beginPath();c.arc(4.5,-21,4,0,7);c.fill();c.stroke();c.beginPath();c.arc(31.5,-21,4,0,7);c.fill();c.stroke();
-  // chevrons
   c.strokeStyle=tc;c.lineWidth=2.4;c.lineCap="round";var sp=n<=4?5:3.7;
   for(var i=0;i<n;i++){var y=-34+i*sp;c.beginPath();c.moveTo(11,y+4);c.lineTo(18,y);c.lineTo(25,y+4);c.stroke()}
   c.lineCap="butt";c.strokeStyle="#14213d";c.lineWidth=2;
-  // ears
+  if(acc==="medal"){c.fillStyle="#e63946";c.fillRect(22,-24,4,6);c.fillStyle="#ffd24a";c.beginPath();c.arc(24,-15,3.6,0,7);c.fill();c.stroke()}
   c.fillStyle=BR;c.beginPath();c.arc(8,-55,6,0,7);c.fill();c.stroke();c.beginPath();c.arc(28,-55,6,0,7);c.fill();c.stroke();
   c.fillStyle=TN;c.beginPath();c.arc(8,-55,2.8,0,7);c.fill();c.beginPath();c.arc(28,-55,2.8,0,7);c.fill();
-  // head
   c.fillStyle=BR;c.beginPath();c.arc(18,-45,13,0,7);c.fill();c.stroke();
   c.fillStyle=TN;c.beginPath();c.ellipse(18,-41,6.5,5.5,0,0,7);c.fill();
   c.fillStyle="#14213d";c.beginPath();c.ellipse(18,-43.5,2.4,1.8,0,0,7);c.fill();
   c.beginPath();c.arc(12.5,-48,1.9,0,7);c.fill();c.beginPath();c.arc(23.5,-48,1.9,0,7);c.fill();
   c.beginPath();c.moveTo(18,-41.7);c.lineTo(18,-39.5);c.stroke();
-  // goggles on forehead
-  c.fillStyle="#5a3a1c";c.fillRect(5,-55,26,3.5);
-  c.fillStyle="#9be7ff";c.beginPath();c.arc(13,-55,4.2,0,7);c.fill();c.stroke();c.beginPath();c.arc(23,-55,4.2,0,7);c.fill();c.stroke();
+  if(!hat||hat==="none"){
+    c.fillStyle="#5a3a1c";c.fillRect(5,-55,26,3.5);
+    c.fillStyle="#9be7ff";c.beginPath();c.arc(13,-55,4.2,0,7);c.fill();c.stroke();c.beginPath();c.arc(23,-55,4.2,0,7);c.fill();c.stroke();
+  }else if(hat==="cap"){
+    c.fillStyle="#1d3a8a";c.beginPath();c.arc(18,-50,13,Math.PI,0);c.closePath();c.fill();c.stroke();
+    c.fillRect(18,-52,17,4);c.strokeRect(18,-52,17,4);c.fillStyle="#ffd24a";c.beginPath();c.arc(18,-57,2.6,0,7);c.fill();
+  }else if(hat==="helmet"){
+    c.fillStyle="#7a4a21";c.beginPath();c.arc(18,-48,14.5,Math.PI,0);c.closePath();c.fill();c.stroke();
+    c.fillRect(3,-50,30,3);c.fillStyle="#9be7ff";c.beginPath();c.arc(12,-55,4.4,0,7);c.fill();c.stroke();c.beginPath();c.arc(24,-55,4.4,0,7);c.fill();c.stroke();
+  }else if(hat==="party"){
+    c.fillStyle="#ff4fa3";c.beginPath();c.moveTo(9,-54);c.lineTo(18,-78);c.lineTo(27,-54);c.closePath();c.fill();c.stroke();
+    c.fillStyle="#ffd24a";c.beginPath();c.arc(18,-79,3.5,0,7);c.fill();c.stroke();c.fillStyle="#fff";c.fillRect(13,-64,10,3);
+  }else if(hat==="tophat"){
+    c.fillStyle="#1a1a2a";c.fillRect(4,-57,28,5);c.strokeRect(4,-57,28,5);c.fillRect(9,-78,18,22);c.strokeRect(9,-78,18,22);c.fillStyle="#e63946";c.fillRect(9,-65,18,4);
+  }else if(hat==="crown"){
+    c.fillStyle="#ffc233";c.beginPath();c.moveTo(7,-55);c.lineTo(7,-70);c.lineTo(13,-63);c.lineTo(18,-73);c.lineTo(23,-63);c.lineTo(29,-70);c.lineTo(29,-55);c.closePath();c.fill();c.stroke();
+    c.fillStyle="#e63946";c.beginPath();c.arc(18,-60,2.2,0,7);c.fill();
+  }
+  if(acc==="shades"){c.fillStyle="#111";c.fillRect(9,-51,8,6);c.fillRect(19,-51,8,6);c.fillRect(16,-50,4,2)}
+  if(acc==="scarf"){
+    var fl=Math.sin(t*10)*3;c.fillStyle="#e63946";c.fillRect(7,-36,22,5);c.strokeRect(7,-36,22,5);
+    c.beginPath();c.moveTo(8,-33);c.lineTo(-10,-30+fl);c.lineTo(-6,-25+fl);c.lineTo(10,-28);c.closePath();c.fill();c.stroke();
+  }
+  if(acc==="bowtie"){c.fillStyle="#7b2cbf";c.beginPath();c.moveTo(18,-35);c.lineTo(9,-40);c.lineTo(9,-30);c.closePath();c.fill();c.stroke();c.beginPath();c.moveTo(18,-35);c.lineTo(27,-40);c.lineTo(27,-30);c.closePath();c.fill();c.stroke();c.fillStyle="#ffd24a";c.beginPath();c.arc(18,-35,2.5,0,7);c.fill()}
   c.restore();
 }
 function cloud(c,x,y,s){c.beginPath();c.arc(x,y,16*s,0,7);c.arc(x+18*s,y-8*s,20*s,0,7);c.arc(x+40*s,y,16*s,0,7);c.rect(x,y,40*s,16*s);c.fill()}
@@ -812,13 +952,16 @@ function draw(){
       c.beginPath();c.moveTo(x,e.y+22);c.lineTo(x+e.w,e.y+22);c.moveTo(x+22,e.y);c.lineTo(x+22,e.y+22);c.moveTo(x+11,e.y+22);c.lineTo(x+11,e.y+e.h);c.moveTo(x+33,e.y+22);c.lineTo(x+33,e.y+e.h);c.stroke();
     }else if(e.type==="block"){
       var by=e.y-Math.sin(e.bump*Math.PI)*10,used=e.hit||e.missed;
-      c.fillStyle=used?"#9b8a6a":"#e8772e";c.fillRect(x,by,e.w,e.h);
+      c.fillStyle=used?"#9b8a6a":(e.kind==="mini"?"#8e44ad":"#e8772e");c.fillRect(x,by,e.w,e.h);
       c.strokeStyle="#14213d";c.lineWidth=3;c.strokeRect(x,by,e.w,e.h);
       if(!used){
         c.fillStyle="#ffd98a";c.fillRect(x+4,by+4,5,5);c.fillRect(x+e.w-9,by+4,5,5);c.fillRect(x+4,by+e.h-9,5,5);c.fillRect(x+e.w-9,by+e.h-9,5,5);
         c.fillStyle="#fff";c.font="22px 'Press Start 2P',monospace";c.textAlign="center";c.textBaseline="middle";c.fillText("?",x+e.w/2+1,by+e.h/2+2);
         c.strokeStyle="rgba(255,255,255,"+(.35+.25*Math.sin(G.anim*6))+")";c.lineWidth=2;c.strokeRect(x-4,by-4,e.w+8,e.h+8);
       }
+    }else if(e.type==="boss"){
+      c.save();c.translate(x,e.y);c.scale(.55,.655);drawBossShape(c,false,true);c.restore();
+      c.fillStyle="#14213d";c.font="9px 'Press Start 2P',monospace";c.textAlign="center";c.fillText("BOSS",x+55,e.y-8);
     }else if(e.type==="flag"){
       c.fillStyle="#fff";c.fillRect(x,e.y,6,e.h);c.strokeStyle="#14213d";c.lineWidth=2;c.strokeRect(x,e.y,6,e.h);
       c.fillStyle="#e63946";c.beginPath();c.moveTo(x+6,e.y+4);c.lineTo(x+62,e.y+22+Math.sin(G.anim*6)*3);c.lineTo(x+6,e.y+42);c.closePath();c.fill();c.stroke();
@@ -826,7 +969,7 @@ function draw(){
     }
   });
   var air=!G.onGround,flash=G.invuln>0&&Math.floor(G.anim*14)%2===0;
-  if(!flash)drawCadet(c,PX,G.py+PH,G.level,G.anim,air,G.plane>0);
+  if(!flash)drawCadet(c,PX,G.py+PH,G.level,G.anim,air,G.plane>0,G.look);
   if(G.shield){c.strokeStyle="rgba(120,220,255,.95)";c.fillStyle="rgba(120,220,255,.18)";c.lineWidth=3;c.beginPath();c.arc(PX+17,G.py+PH/2-4,40,0,7);c.fill();c.stroke()}
   if(G.double>0){c.fillStyle="#14213d";c.font="10px 'Press Start 2P',monospace";c.textAlign="center";c.fillText("x2",PX+17,G.py-24)}
   G.particles.forEach(function(p){
@@ -898,9 +1041,18 @@ function renderQBoost(){
   var h="";
   if(G.inv.half>0)h+='<button class="btn small alt" id="useHalf">50/50 ('+G.inv.half+')</button>';
   if(G.inv.skip>0)h+='<button class="btn small alt" id="useSkip">Skip question ('+G.inv.skip+')</button>';
+  var left=[].filter.call($("qOpts").querySelectorAll(".opt"),function(b){return !b.classList.contains("gone")}).length;
+  if(left>2)h+='<button class="btn small alt" id="buyHint"'+(G.coins<HINT_COST?' disabled':'')+'>Hint: remove a wrong option ('+HINT_COST+' coins)</button>';
   $("qBoost").innerHTML=h;
   var hb=$("useHalf");if(hb)hb.addEventListener("click",useHalf);
   var sb=$("useSkip");if(sb)sb.addEventListener("click",useSkip);
+  var bb=$("buyHint");if(bb)bb.addEventListener("click",buyHint);
+}
+function buyHint(){
+  if(!CUR||CUR.done||G.coins<HINT_COST)return;
+  var wrongs=[].filter.call($("qOpts").querySelectorAll(".opt"),function(b){return CUR.opts[+b.dataset.i]!==CUR.q.c&&!b.classList.contains("gone")});
+  if(wrongs.length<2)return;
+  G.coins-=HINT_COST;var b=pick(wrongs);b.classList.add("gone");b.disabled=true;SFX.block();updateHUD();renderQBoost();
 }
 function useHalf(){
   if(!CUR||CUR.done||G.inv.half<1)return;
@@ -980,13 +1132,265 @@ function levelClear(){
     '<div class="row"><button class="btn go" id="nextLv">Fly to level '+next+'</button><button class="btn alt" id="endNow">Finish and see summary</button></div>';
   $("gModal").classList.add("open");
   var rc=$("rankCv").getContext("2d");rc.fillStyle="#bfe9ff";rc.fillRect(0,0,120,110);
-  rc.save();rc.translate(30,0);rc.scale(1.5,1.5);drawCadet(rc,10,68,next,1,false);rc.restore();
+  rc.save();rc.translate(34,0);rc.scale(1.3,1.3);drawCadet(rc,10,80,next,1,false,false,G.look);rc.restore();
   $("nextLv").addEventListener("click",function(){
     $("gModal").classList.remove("open");G.modal=false;startLevel(next);G.lastT=performance.now();updateHUD();
   });
   $("nextLv").focus();
   $("endNow").addEventListener("click",function(){$("gModal").classList.remove("open");G.level=next;endGame()});
   updateHUD();
+}
+
+/* ------------------------------------------------------------------ */
+/* MINI-GAMES (purple ? blocks) + BOSS                                  */
+/* ------------------------------------------------------------------ */
+var MG={raf:0,iv:0,last:""};
+var HINT_COST=5;
+function mgCard(html){$("mgCard").innerHTML=html;$("mgModal").classList.add("open");$("mgModal").scrollTop=0}
+function mgStop(){cancelAnimationFrame(MG.raf);clearInterval(MG.iv)}
+function mgFinish(title,coins,lines,boost){
+  mgStop();
+  G.coins+=coins;G.score+=coins*10;
+  var b="";
+  if(boost){var k=pick(["shield","double","half","skip"]);givePick(k);b='<p><b>Bonus booster: '+PICKS[k].n+'</b></p>'}
+  SFX.right();
+  mgCard('<h2 id="mgTitle" style="font-size:1rem;margin-bottom:10px">'+esc(title)+' done!</h2><p class="big" style="font-size:1.2rem;margin:0 0 8px">+'+coins+' coins</p><p style="margin:0 0 8px">'+lines+'</p>'+b+'<div class="row"><button class="btn go" id="mgDone">Keep flying</button></div>');
+  updateHUD();
+  $("mgDone").addEventListener("click",function(){$("mgModal").classList.remove("open");G.modal=false;G.lastT=performance.now()});
+  $("mgDone").focus();
+}
+var MINIS={
+  ninja:{title:"Science Ninja",how:"Words fly up the screen. Swipe or tap to slice only the ones that match the topic. A wrong slice costs 1 coin.",start:function(){startNinja()}},
+  digest:{title:"Tap-tap Digest",how:"Read the job, then tap the organ that does it. Be quick. Every right tap earns 3 coins.",start:function(){startDigest()}},
+  circuit:{title:"Circuit Rush",how:"A circuit appears. Tap SERIES or PARALLEL as fast as you can. Every right answer earns 2 coins, with a bonus for streaks.",start:function(){startCircuit()}}
+};
+function openMini(kind){
+  G.modal=true;
+  if(!kind){var ks=Object.keys(MINIS).filter(function(k){return k!==MG.last});kind=pick(ks)}
+  MG.last=kind;var m=MINIS[kind];
+  mgCard('<div class="q-meta"><span class="topic-pill" style="background:#8e44ad">Mini-game</span></div><h2 id="mgTitle" style="font-size:1rem;margin-bottom:10px">'+esc(m.title)+'</h2><p>'+esc(m.how)+'</p><p class="muted">You have 20 seconds. Coins you win go straight into your run.</p><div class="row"><button class="btn go" id="mgStart">Start</button></div>');
+  $("mgStart").addEventListener("click",m.start);$("mgStart").focus();
+}
+function mgTop(label){
+  return '<div class="q-meta"><span class="topic-pill" style="background:#8e44ad">'+esc(label)+'</span><span class="muted" id="mgTime" style="font-weight:800">20s</span></div><div class="bar"><i id="mgBar" style="width:100%"></i></div>';
+}
+function mgTick(t){$("mgBar").style.width=Math.max(0,100-t/20*100)+"%";$("mgTime").textContent=Math.max(0,Math.ceil(20-t))+"s"}
+
+/* ---- Science Ninja ---- */
+var NINJA=[
+  {t:"fossil fuels",good:["coal","oil","natural gas","petrol"],bad:["wind","sunlight","flowing water","tides"]},
+  {t:"electromagnetic waves",good:["radio waves","microwaves","infrared","visible light","ultraviolet","X-rays","gamma rays"],bad:["sound waves","water ripples","rope waves","a guitar string"]},
+  {t:"illnesses caused by VIRUSES",good:["flu","dengue","chickenpox","measles","common cold"],bad:["tuberculosis","cholera","strep throat","food poisoning"]},
+  {t:"parts of the digestive system",good:["mouth","gullet","stomach","small intestine","large intestine","liver"],bad:["lungs","heart","kidney","windpipe","brain"]},
+  {t:"effects of a force",good:["change in shape","change in speed","change in direction","turning effect"],bad:["change in colour","change in mass","change in smell"]},
+  {t:"foods rich in PROTEIN",good:["chicken","fish","eggs","tofu","beans"],bad:["rice","bread","noodles","sugar","cooking oil"]},
+  {t:"forms of ENERGY",good:["kinetic","thermal","sound","chemical","electrical"],bad:["speed","mass","voltage","force"]},
+  {t:"things that keep bones strong",good:["calcium","milk","tofu","walking","jogging"],bad:["smoking","skipping meals","never exercising"]}
+];
+function startNinja(){
+  var cat=pick(NINJA);
+  mgCard(mgTop("Science Ninja")+'<p class="q-text" style="margin:10px 0 8px">Slice only: <span style="background:#ffd24a;padding:2px 8px;border-radius:6px">'+esc(cat.t)+'</span></p>'+
+    '<div class="canvas-wrap" style="box-shadow:none;border-width:3px"><canvas id="ninjaCv" width="640" height="360" aria-label="Words fly up. Swipe or tap the ones that match: '+esc(cat.t)+'"></canvas></div>'+
+    '<p class="muted" id="mgScore" style="margin:8px 0 0">Right: 0 &middot; Wrong: 0</p>');
+  var cv2=$("ninjaCv"),c2=cv2.getContext("2d"),items=[],trail=[],good=0,bad=0,t=0,acc=0,last=performance.now(),lastP=null,over=false;
+  function spawn(){
+    var isGood=Math.random()<.55,w=isGood?pick(cat.good):pick(cat.bad),x=ri(100,540);
+    items.push({x:x,y:395,vx:(320-x)*.45+ri(-50,50),vy:-ri(470,560),w:w,good:isGood,sl:false,age:0,hw:w.length*5+16});
+  }
+  function pos(e){var r=cv2.getBoundingClientRect();return{x:(e.clientX-r.left)*640/r.width,y:(e.clientY-r.top)*360/r.height}}
+  function hit(p){
+    items.forEach(function(it){
+      if(it.sl||Math.abs(p.x-it.x)>it.hw+8||Math.abs(p.y-it.y)>28)return;
+      it.sl=true;it.age=0;
+      if(it.good){good++;SFX.coin()}else{bad++;SFX.wrong()}
+      $("mgScore").innerHTML="Right: "+good+" &middot; Wrong: "+bad;
+    });
+  }
+  cv2.addEventListener("pointerdown",function(e){e.preventDefault();try{cv2.setPointerCapture(e.pointerId)}catch(x){}lastP=pos(e);trail=[lastP];hit(lastP)});
+  cv2.addEventListener("pointermove",function(e){
+    if(!lastP)return;e.preventDefault();var p=pos(e),dx=p.x-lastP.x,dy=p.y-lastP.y,n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/10));
+    for(var i=1;i<=n;i++)hit({x:lastP.x+dx*i/n,y:lastP.y+dy*i/n});
+    trail.push(p);if(trail.length>10)trail.shift();lastP=p;
+  });
+  function up(){lastP=null;trail=[]}
+  cv2.addEventListener("pointerup",up);cv2.addEventListener("pointercancel",up);
+  function frame(now){
+    if(over)return;
+    var dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;acc+=dt;
+    if(acc>.5){acc=0;spawn();if(Math.random()<.35)spawn()}
+    items.forEach(function(it){it.x+=it.vx*dt;it.vy+=700*dt;it.y+=it.vy*dt;if(it.sl)it.age+=dt});
+    items=items.filter(function(it){return !(it.y>430&&it.vy>0)&&!(it.sl&&it.age>.6)});
+    c2.fillStyle="#2b1b4d";c2.fillRect(0,0,640,360);
+    c2.fillStyle="rgba(255,255,255,.08)";for(var s=0;s<8;s++)c2.fillRect((s*97)%640,(s*53)%360,3,3);
+    c2.font="bold 18px Nunito,Arial,sans-serif";c2.textAlign="center";c2.textBaseline="middle";
+    items.forEach(function(it){
+      var w=c2.measureText(it.w).width+24;it.hw=w/2;
+      if(!it.sl){
+        c2.fillStyle="#fffdf5";c2.strokeStyle="#14213d";c2.lineWidth=3;
+        c2.beginPath();c2.roundRect?c2.roundRect(it.x-w/2,it.y-18,w,36,10):c2.rect(it.x-w/2,it.y-18,w,36);c2.fill();c2.stroke();
+        c2.fillStyle="#14213d";c2.fillText(it.w,it.x,it.y+1);
+      }else{
+        var d=it.age*130,col=it.good?"#c9f0d4":"#fbd0cf";c2.globalAlpha=Math.max(0,1-it.age/.6);
+        [-1,1].forEach(function(sd){
+          c2.save();c2.translate(sd*d,it.age*70+sd*it.age*10);c2.beginPath();c2.rect(sd<0?it.x-w/2-4:it.x,it.y-24,w/2+4,48);c2.clip();
+          c2.fillStyle=col;c2.strokeStyle="#14213d";c2.lineWidth=3;c2.beginPath();c2.roundRect?c2.roundRect(it.x-w/2,it.y-18,w,36,10):c2.rect(it.x-w/2,it.y-18,w,36);c2.fill();c2.stroke();
+          c2.fillStyle="#14213d";c2.fillText(it.w,it.x,it.y+1);c2.restore();
+        });
+        c2.fillStyle="#fff";c2.font="bold 20px Nunito,Arial,sans-serif";c2.fillText(it.good?"+2":"-1",it.x,it.y-30-it.age*40);c2.font="bold 18px Nunito,Arial,sans-serif";c2.globalAlpha=1;
+      }
+    });
+    if(trail.length>1){c2.strokeStyle="#fff";c2.lineWidth=4;c2.lineCap="round";c2.beginPath();c2.moveTo(trail[0].x,trail[0].y);trail.forEach(function(p){c2.lineTo(p.x,p.y)});c2.stroke()}
+    mgTick(t);
+    if(t>=20){over=true;mgFinish("Science Ninja",Math.max(0,good*2-bad),"You sliced "+good+" right and "+bad+" wrong.",good>=8);return}
+    MG.raf=requestAnimationFrame(frame);
+  }
+  MG.raf=requestAnimationFrame(frame);
+}
+
+/* ---- Tap-tap Digest ---- */
+var ORGANS=[["mouth","Mouth"],["gullet","Gullet"],["stomach","Stomach"],["liver","Liver"],["pancreas","Pancreas"],["small","Small intestine"],["large","Large intestine"]];
+var JOBS=[
+  ["mouth","Chews food and mixes it with saliva."],["mouth","Food enters the digestive system here."],
+  ["gullet","Squeezes food down to the stomach."],["gullet","The tube that joins the mouth to the stomach."],
+  ["stomach","Churns food with acid juices."],["stomach","Starts to digest proteins."],
+  ["liver","Makes bile to help digest fats."],["liver","Can be damaged by drinking too much alcohol for many years."],
+  ["pancreas","Makes digestive juices with enzymes for the small intestine."],
+  ["small","Most digested food is absorbed into the blood here."],["small","Long, narrow and folded to give a large surface for absorption."],
+  ["large","Absorbs water from undigested food."],["large","Forms the faeces."]
+];
+function startDigest(){
+  var good=0,t=0,job=null,lock=false,btns="";
+  ORGANS.forEach(function(o){btns+='<button class="btn alt org" data-k="'+o[0]+'">'+esc(o[1])+'</button>'});
+  mgCard(mgTop("Tap-tap Digest")+'<p class="muted" style="margin:10px 0 4px">Which organ does this job?</p><div class="job" id="job" role="status"></div><div class="org-grid" id="orgGrid">'+btns+'</div><p class="muted" id="mgScore" style="margin:8px 0 0">Right: 0</p>');
+  function next(){var j;do{j=pick(JOBS)}while(j===job);job=j;$("job").textContent=j[1];[].forEach.call($("orgGrid").children,function(b){b.classList.remove("right","wrong")});lock=false}
+  next();
+  $("orgGrid").addEventListener("pointerdown",function(e){
+    var b=e.target.closest(".org");if(!b||lock)return;e.preventDefault();lock=true;
+    var ok=b.dataset.k===job[0];
+    if(ok){good++;b.classList.add("right");SFX.coin();$("mgScore").textContent="Right: "+good}
+    else{b.classList.add("wrong");SFX.wrong();[].forEach.call($("orgGrid").children,function(x){if(x.dataset.k===job[0])x.classList.add("right")})}
+    setTimeout(function(){if(t<20)next()},ok?220:900);
+  });
+  MG.iv=setInterval(function(){t+=.1;mgTick(t);if(t>=20){mgFinish("Tap-tap Digest",good*3,"You tapped "+good+" organs correctly.",good>=7)}},100);
+}
+
+/* ---- Circuit Rush ---- */
+function drawCircuit(c,type,n,variant){
+  c.fillStyle="#fffdf5";c.fillRect(0,0,480,240);c.strokeStyle="#14213d";c.lineWidth=3;c.lineCap="round";c.lineJoin="round";
+  function L(x1,y1,x2,y2){c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+  function bulb(x,y){c.fillStyle="#fff2a8";c.beginPath();c.arc(x,y,17,0,7);c.fill();c.stroke();c.beginPath();c.moveTo(x-12,y-12);c.lineTo(x+12,y+12);c.moveTo(x+12,y-12);c.lineTo(x-12,y+12);c.stroke()}
+  function cell(x,y){L(x,y-30,x,y-8);L(x-17,y-8,x+17,y-8);c.lineWidth=7;L(x-9,y+3,x+9,y+3);c.lineWidth=3;L(x,y+3,x,y+30)}
+  if(type==="series"){
+    L(70,40,70,90);cell(70,120);L(70,150,70,200);L(70,40,410,40);L(410,40,410,200);L(70,200,410,200);
+    var top=[[n,0],[n-1,1],[Math.max(1,n-2),n-Math.max(1,n-2)]][variant%3];
+    var kt=top[0],kb=n-kt;
+    for(var i=0;i<kt;i++)bulb(70+(i+1)*340/(kt+1),40);
+    for(var j=0;j<kb;j++)bulb(70+(j+1)*340/(kb+1),200);
+  }else{
+    var ys=n===2?[50,190]:[50,120,190],t0=ys[0],b0=ys[ys.length-1];
+    L(170,t0,70,t0);L(70,t0,70,90);cell(70,120);L(70,150,70,b0);L(70,b0,170,b0);
+    L(170,t0,170,b0);L(410,t0,410,b0);
+    ys.forEach(function(y){L(170,y,410,y);c.fillStyle="#14213d";c.beginPath();c.arc(170,y,4.5,0,7);c.fill();c.beginPath();c.arc(410,y,4.5,0,7);c.fill()});
+    ys.forEach(function(y){bulb(290,y)});
+  }
+}
+function startCircuit(){
+  var good=0,t=0,streak=0,bonus=0,cur=null,lock=false;
+  mgCard(mgTop("Circuit Rush")+'<p class="q-text" style="margin:10px 0 8px">Are the bulbs in <b>series</b> or in <b>parallel</b>?</p>'+
+    '<div class="canvas-wrap" style="box-shadow:none;border-width:3px;max-width:480px;margin-inline:auto"><canvas id="circCv" width="480" height="240" aria-label="A circuit diagram"></canvas></div>'+
+    '<div class="two" id="circBtns"><button class="btn alt org" data-k="series">Series</button><button class="btn alt org" data-k="parallel">Parallel</button></div>'+
+    '<p class="muted" id="mgScore" style="margin:8px 0 0">Right: 0</p>');
+  var c2=$("circCv").getContext("2d");
+  function next(){var type=Math.random()<.5?"series":"parallel";cur={type:type};drawCircuit(c2,type,type==="series"?ri(2,3):ri(2,3),ri(0,2));[].forEach.call($("circBtns").children,function(b){b.classList.remove("right","wrong")});lock=false}
+  next();
+  $("circBtns").addEventListener("pointerdown",function(e){
+    var b=e.target.closest(".org");if(!b||lock)return;e.preventDefault();lock=true;
+    var ok=b.dataset.k===cur.type;
+    if(ok){good++;streak++;b.classList.add("right");SFX.coin();if(streak%5===0){bonus+=3;showToast("Streak bonus +3 coins")}}
+    else{streak=0;b.classList.add("wrong");SFX.wrong();[].forEach.call($("circBtns").children,function(x){if(x.dataset.k===cur.type)x.classList.add("right")})}
+    $("mgScore").textContent="Right: "+good;
+    setTimeout(function(){if(t<20)next()},ok?180:700);
+  });
+  MG.iv=setInterval(function(){t+=.1;mgTick(t);if(t>=20){mgFinish("Circuit Rush",good*2+bonus,"You identified "+good+" circuits correctly"+(bonus?" and earned "+bonus+" streak bonus coins.":"."),good>=8)}},100);
+}
+
+/* ---- Boss fight (no questions: tap exactly N times) ---- */
+var SLOTS=[[2,3],[2,52],[71,3],[71,52],[36,69]];
+function drawBossShape(c,flash,noclear){
+  if(!noclear)c.clearRect(0,0,200,260);c.lineJoin="round";c.strokeStyle="#14213d";c.lineWidth=6;
+  c.fillStyle="#f6e7c8";c.fillRect(60,150,80,80);c.strokeRect(60,150,80,80);
+  c.fillStyle="#14213d";c.fillRect(54,226,42,18);c.fillRect(104,226,42,18);
+  c.fillStyle="#d62839";c.beginPath();c.arc(100,150,92,Math.PI,0);c.closePath();c.fill();c.stroke();
+  c.fillStyle="#fff";[[48,95,15],[152,95,15],[100,62,13],[75,128,10],[128,128,10]].forEach(function(s){c.beginPath();c.arc(s[0],s[1],s[2],0,7);c.fill()});
+  c.fillStyle="#fff";c.beginPath();c.ellipse(76,168,17,15,0,0,7);c.fill();c.stroke();c.beginPath();c.ellipse(124,168,17,15,0,0,7);c.fill();c.stroke();
+  c.fillStyle="#14213d";c.beginPath();c.arc(80,172,6,0,7);c.fill();c.beginPath();c.arc(120,172,6,0,7);c.fill();
+  c.lineWidth=8;c.beginPath();c.moveTo(52,140);c.lineTo(92,158);c.moveTo(148,140);c.lineTo(108,158);c.stroke();
+  c.lineWidth=5;c.beginPath();c.moveTo(78,208);c.lineTo(88,198);c.lineTo(100,208);c.lineTo(112,198);c.lineTo(122,208);c.stroke();
+  c.fillStyle="#ffc233";c.lineWidth=5;c.beginPath();c.moveTo(66,64);c.lineTo(66,34);c.lineTo(83,50);c.lineTo(100,24);c.lineTo(117,50);c.lineTo(134,34);c.lineTo(134,64);c.closePath();c.fill();c.stroke();
+  if(flash){c.fillStyle="rgba(255,255,255,.55)";c.fillRect(0,0,200,260)}
+}
+function openBoss(ent){
+  G.modal=true;
+  var hp=100,boards=[],used={},over=false,hurtT=0;
+  $("bossCard").innerHTML='<h2 id="bossTitle" style="font-size:1rem;margin-bottom:8px">Mock Exam Boss</h2>'+
+    '<p style="margin:0 0 10px">Tap each board <b>exactly</b> as many times as its number says, then wait a moment. Too few taps and the board stays. Too many and the boss heals.</p>'+
+    '<div class="hp" aria-label="Boss health"><i id="bossHp" style="width:100%"></i></div>'+
+    '<div class="arena" id="arena"><canvas id="bossCv" width="200" height="260" aria-hidden="true"></canvas></div>'+
+    '<p id="bossMsg" role="status" style="margin:10px 0 0;font-weight:800">Tap a board to start.</p><div id="bossEnd"></div>';
+  var bc=$("bossCv").getContext("2d");drawBossShape(bc,false);
+  function say(m){$("bossMsg").textContent=m}
+  function setHp(){$("bossHp").style.width=Math.max(0,hp)+"%"}
+  function flash(){drawBossShape(bc,true);$("bossCv").classList.add("hit");setTimeout(function(){drawBossShape(bc,false);$("bossCv").classList.remove("hit")},180)}
+  function makeBoard(si){
+    used[si]=1;
+    var need=pick([1,2,2,3,3,4,4,5,6]),el=document.createElement("button");
+    el.className="target";el.style.left=SLOTS[si][0]+"%";el.style.top=SLOTS[si][1]+"%";
+    el.innerHTML='<span class="n">Tap '+need+'</span><span class="c">taps: 0</span>';
+    var b={el:el,need:need,taps:0,slot:si,tm:0};boards.push(b);
+    el.addEventListener("pointerdown",function(e){e.preventDefault();tap(b)});
+    el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();tap(b)}});
+    $("arena").appendChild(el);
+  }
+  function fill(){
+    var want=Math.min(3,Math.ceil(hp/25));
+    while(boards.length<want&&hp>0){
+      var free=[];SLOTS.forEach(function(s,i){if(!used[i])free.push(i)});if(!free.length)break;
+      makeBoard(pick(free));
+    }
+  }
+  function tap(b){
+    if(over)return;b.taps++;beep(500+b.taps*60,.06,"square",.04);
+    b.el.querySelector(".c").textContent="taps: "+b.taps;
+    clearTimeout(b.tm);b.tm=setTimeout(function(){judge(b)},800);
+  }
+  function shake(b){b.el.classList.remove("shake");void b.el.offsetWidth;b.el.classList.add("shake")}
+  function judge(b){
+    if(over||boards.indexOf(b)<0)return;
+    if(b.taps===b.need){
+      boards.splice(boards.indexOf(b),1);delete used[b.slot];b.el.remove();hp-=25;SFX.coin();flash();setHp();say("Direct hit!");
+      if(hp<=0){win();return}
+      fill();
+    }else if(b.taps<b.need){
+      say("Too few. That board needs exactly "+b.need+" taps.");SFX.block();shake(b);b.taps=0;b.el.querySelector(".c").textContent="taps: 0";
+    }else{
+      var extra=b.taps-b.need;hp=Math.min(100,hp+extra*6);setHp();say("Too many! The boss healed +"+extra*6+". That board needs exactly "+b.need+" taps.");SFX.wrong();shake(b);b.taps=0;b.el.querySelector(".c").textContent="taps: 0";fill();
+    }
+  }
+  function win(){
+    over=true;clearTimeout(skipT);SFX.level();
+    $("bossMsg").textContent="Boss defeated!";
+    $("bossEnd").innerHTML='<p class="big" style="font-size:1.1rem;margin:12px 0 8px">+30 coins</p><div class="row"><button class="btn go" id="bossDone">Fly to the flag</button></div>';
+    G.coins+=30;G.score+=300;updateHUD();
+    $("bossDone").addEventListener("click",done);$("bossDone").focus();
+  }
+  function done(){over=true;clearTimeout(skipT);boards.forEach(function(b){clearTimeout(b.tm)});$("bossModal").classList.remove("open");ent.dead=true;G.modal=false;G.lastT=performance.now();updateHUD()}
+  var skipT=setTimeout(function(){
+    if(over)return;
+    $("bossEnd").innerHTML='<div class="row" style="margin-top:12px"><button class="btn alt" id="bossSkip">Skip the boss (+10 coins)</button></div>';
+    $("bossSkip").addEventListener("click",function(){G.coins+=10;G.score+=100;done()});
+  },60000);
+  $("bossModal").classList.add("open");$("bossModal").scrollTop=0;
+  fill();
 }
 
 /* ------------------------------------------------------------------ */
@@ -1037,7 +1441,7 @@ function endGame(){
   var board=store.get("hgrsciencerun.board",[]);board.push({name:rec.name,score:rec.score,level:rec.level,when:Date.now()});
   board.sort(function(a,b){return b.score-a.score});board=board.slice(0,10);store.set("hgrsciencerun.board",board);
   var rank=board.findIndex(function(r){return r.score===rec.score&&r.name===rec.name})+1;
-  var code=makeCode(rec);
+  var code=makeCode(rec);var prof=loadProfile(G.name);prof.bank+=G.coins;saveProfile(prof);
   var mins=Math.round(G.elapsed/60);
   var h='<div class="panel"><h1 class="big" style="margin-bottom:6px">Flight complete</h1>'+
     '<p style="margin:0" class="muted">'+esc(G.name)+' &middot; '+esc(rankName(G.level))+' &middot; '+mins+' min in the air'+(rank&&rank<=10?' &middot; #'+rank+' on this device':'')+'</p>'+
@@ -1046,7 +1450,8 @@ function endGame(){
     '<div class="stat"><span class="k">Accuracy</span><span class="v">'+acc+'%</span></div>'+
     '<div class="stat"><span class="k">Best streak</span><span class="v">'+G.bestStreak+'</span></div>'+
     '<div class="stat"><span class="k">Level reached</span><span class="v">'+G.level+'</span></div>'+
-    '<div class="stat"><span class="k">Questions</span><span class="v">'+G.correct+'/'+G.answered+'</span></div></div>';
+    '<div class="stat"><span class="k">Questions</span><span class="v">'+G.correct+'/'+G.answered+'</span></div></div>'+
+    '<p class="muted" style="margin:0">'+G.coins+' coins added to '+esc(G.name)+'&#39;s bank. Bank total: '+prof.bank+'. Spend them in the Bear wardrobe.</p>';
   h+='<h2 style="font-size:.8rem;margin:18px 0 8px">Topic check</h2><div class="topic-bars">';
   TKEYS.forEach(function(k){
     var s=G.perTopic[k];
@@ -1092,7 +1497,7 @@ $("pauseBtn").addEventListener("click",function(){this.blur();pauseToggle()});
 document.addEventListener("visibilitychange",function(){if(document.hidden&&G&&!G.over&&!G.modal&&!G.paused&&$("game").style.display!=="none")pauseToggle()});
 
 buildMenu();
-window.__sky={BANK:BANK,GENS:GENS,TOPICS:TOPICS,getG:function(){return G}};
+window.__sky={openQuestion:openQuestion,openMini:openMini,openBoss:openBoss,startNinja:startNinja,startDigest:startDigest,startCircuit:startCircuit,renderWardrobe:renderWardrobe,BANK:BANK,GENS:GENS,TOPICS:TOPICS,getG:function(){return G}};
 })();
 </script>
 
