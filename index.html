@@ -147,25 +147,14 @@ canvas{width:100%;height:auto;display:block}
 <!-- MENU -->
 <section id="menu" aria-label="Start menu">
   <div class="hero">
-    <h1 class="title">HILLGROVER<br>SCIENCE RUN<small>Sec 3 Science revision &middot; United We Soar</small></h1>
+    <h1 class="title">HILLGROVER<br>SCIENCE RUN<small>Sec 3 G1 Science Revision</small></h1>
   </div>
   <div class="panel">
     <h2 style="font-size:.95rem;margin-bottom:6px">Ready for take-off?</h2>
     <p class="muted" style="margin:0">Help your teddy bear pilot run, jump and hit the orange ? blocks. Each block asks a revision question from Energy, Electricity, Waves, Forces, Staying Healthy and Digestion.</p>
     <div class="field">
-      <label for="nameIn">Pilot name</label>
+      <label for="nameIn">Your name</label>
       <input id="nameIn" type="text" maxlength="14" placeholder="e.g. Aisha" autocomplete="off">
-    </div>
-    <div class="field">
-      <span class="label" id="lenLabel">How long do you want to fly?</span>
-      <div class="chips" role="group" aria-labelledby="lenLabel" id="lenChips">
-        <button class="chip" data-min="10" aria-pressed="false">10 min</button>
-        <button class="chip" data-min="20" aria-pressed="false">20 min</button>
-        <button class="chip" data-min="40" aria-pressed="false">40 min</button>
-        <button class="chip" data-min="60" aria-pressed="true">1 hour</button>
-        <button class="chip" data-min="120" aria-pressed="false">2 hours</button>
-        <button class="chip" data-min="0" aria-pressed="false">No limit</button>
-      </div>
     </div>
     <div class="field">
       <span class="label" id="topicLabel">Topics</span>
@@ -196,10 +185,14 @@ canvas{width:100%;height:auto;display:block}
   </div>
 
   <div class="panel" style="grid-column:1/-1">
-    <h2 style="font-size:.8rem;margin-bottom:6px">Class board</h2>
-    <p class="muted" style="margin:0 0 8px">Every finished flight gives a score code. Paste the codes your class shares (one per line) to rank everyone together.</p>
+    <h2 style="font-size:.8rem;margin-bottom:8px">Class leaderboard (for the teacher)</h2>
+    <ol class="how" style="margin-bottom:12px">
+      <li>When a student ends their flight, the summary screen shows a <b>score code</b> that starts with HSR-.</li>
+      <li>Students send their code to the teacher, for example in the class chat or on SLS.</li>
+      <li>The teacher pastes all the codes below, one per line, and taps <b>Rank these codes</b>. The class ranking appears.</li>
+    </ol>
     <label for="codesIn" class="sr">Score codes</label>
-    <textarea id="codesIn" placeholder="HSR-..."></textarea>
+    <textarea id="codesIn" placeholder="Paste score codes here, one per line. Example: HSR-U2VhbnwxMjQ1fDQyfDc1fDN8MTI-1AB"></textarea>
     <div class="row" style="margin-top:10px"><button class="btn small" id="rankBtn">Rank these codes</button><span class="muted" id="rankMsg"></span></div>
     <div class="scroll-x" id="classBoard" style="margin-top:10px"></div>
   </div>
@@ -211,7 +204,7 @@ canvas{width:100%;height:auto;display:block}
     <div class="stat"><span class="k">Coins</span><span class="v" id="hCoins">0</span></div>
     <div class="stat"><span class="k">Score</span><span class="v" id="hScore">0</span></div>
     <div class="stat"><span class="k">Streak</span><span class="v" id="hStreak">0</span></div>
-    <div class="stat"><span class="k">Time left</span><span class="v" id="hTime">--</span></div>
+    <div class="stat"><span class="k">Time played</span><span class="v" id="hTime">--</span></div>
     <div class="stat wide"><span class="k" id="hRank">Level 1</span><span class="v" style="font-size:.7rem" id="hLevel"></span><div class="bar"><i id="hBar"></i></div></div>
   </div>
   <div class="canvas-wrap"><canvas id="cv" width="960" height="420" aria-label="Side-scrolling game. Press space or tap to jump."></canvas></div>
@@ -450,12 +443,12 @@ var store={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:
            set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
-function fmtTime(s){s=Math.max(0,Math.ceil(s));var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x}
+function fmtTime(s){s=Math.max(0,Math.floor(s));var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x}
 
 var RANKS=["Cadet","Airman","Flight Sergeant","Pilot Officer","Flying Officer","Flight Lieutenant","Squadron Leader","Wing Commander","Group Captain","Air Commodore","Air Vice-Marshal","Air Marshal"];
 function rankName(l){return l<=RANKS.length?RANKS[l-1]:"Ace Pilot "+(l-RANKS.length)}
 
-var cfg={minutes:60,topics:TKEYS.slice(),sound:true};
+var cfg={minutes:0,topics:TKEYS.slice(),sound:true};
 var G=null;   // game state
 
 /* ---- audio ---- */
@@ -485,13 +478,8 @@ var SFX={
 /* ------------------------------------------------------------------ */
 function buildMenu(){
   var saved=store.get("hgrsciencerun.cfg",null);
-  if(saved){cfg.minutes=saved.minutes;cfg.sound=saved.sound!==false;if(saved.topics&&saved.topics.length)cfg.topics=saved.topics}
+  if(saved){cfg.minutes=0;cfg.sound=saved.sound!==false;if(saved.topics&&saved.topics.length)cfg.topics=saved.topics}
   $("nameIn").value=store.get("hgrsciencerun.name","");
-  var chips=$("lenChips").querySelectorAll(".chip");
-  chips.forEach(function(c){
-    c.setAttribute("aria-pressed",String(+c.dataset.min===cfg.minutes));
-    c.addEventListener("click",function(){cfg.minutes=+c.dataset.min;chips.forEach(function(x){x.setAttribute("aria-pressed",String(x===c))})});
-  });
   var tc=$("topicChips");
   TKEYS.forEach(function(k){
     var b=document.createElement("button");b.className="chip";b.textContent=TOPICS[k].name;
@@ -719,7 +707,7 @@ function step(dt){
   G.particles.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g||600)*dt;p.life-=dt});
   G.particles=G.particles.filter(function(p){return p.life>0});
   if(G.shake>0)G.shake=Math.max(0,G.shake-dt*4);
-  if(G.limit)$("hTime").textContent=fmtTime(G.limit-G.elapsed);
+  $("hTime").textContent=fmtTime(G.elapsed);
   if(G.plane>0&&Math.floor(G.plane*4)!==G._pl){G._pl=Math.floor(G.plane*4);updateHUD()}
 }
 
@@ -1004,7 +992,7 @@ function updateHUD(){
   $("hRank").innerHTML=chevSVG(G.level,22)+" Level "+G.level+" · "+esc(rankName(G.level));
   $("hLevel").textContent=G.levelDone+" / "+G.levelBlocks+" question blocks";
   $("hBar").style.width=Math.min(100,G.levelDone/G.levelBlocks*100)+"%";
-  $("hTime").textContent=G.limit?fmtTime(G.limit-G.elapsed):"No limit";
+  $("hTime").textContent=fmtTime(G.elapsed);
   var h="";
   h+='<span class="item'+(G.shield?" on":"")+'">Shield: '+(G.shield?"ready":"none")+'</span>';
   h+='<span class="item'+(G.plane>0?" on":"")+'">Plane: '+(G.plane>0?Math.ceil(G.plane)+"s":"none")+'</span>';
@@ -1067,7 +1055,7 @@ function endGame(){
     G.missed.slice(0,20).forEach(function(m){h+='<li><div class="muted" style="font-size:.8rem;font-weight:800">'+esc(TOPICS[m.t].name)+'</div><div>'+esc(m.q)+'</div><div style="margin-top:4px"><b>Answer:</b> '+esc(m.c)+'</div><div class="muted" style="font-size:.9rem">'+esc(m.why)+'</div></li>'});
     h+='</ul>';
   }else if(G.answered){h+='<p style="margin-top:16px"><b>No missed questions. Brilliant flying.</b></p>'}
-  h+='<h2 style="font-size:.8rem;margin:18px 0 6px">Your score code</h2><p class="muted" style="margin:0 0 6px">Share this with your teacher or class to join the class board.</p><div class="code" id="codeBox">'+esc(code)+'</div>'+
+  h+='<h2 style="font-size:.8rem;margin:18px 0 6px">Your score code</h2><p class="muted" style="margin:0 0 6px">Send this code to your teacher to appear on the class leaderboard.</p><div class="code" id="codeBox">'+esc(code)+'</div>'+
     '<div class="row" style="margin-top:12px"><button class="btn" id="copyBtn">Copy code</button><button class="btn go" id="againBtn">Fly again</button></div></div>';
   $("summary").innerHTML=h;
   $("game").style.display="none";$("summary").style.display="block";window.scrollTo(0,0);
